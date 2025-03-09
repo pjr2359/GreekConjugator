@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const GreekConjugationApp = () => {
+const GreekConjugationApp = ({ settings, onBackToHome }) => {
   const [mode, setMode] = useState('practice'); // 'practice' or 'story'
   const [verbData, setVerbData] = useState({
     verb: 'γράφω',
@@ -37,7 +37,9 @@ const GreekConjugationApp = () => {
     'Ο Γιώργος και η Μαρία πηγαίνουν στην αγορά. Εκεί, ο Γιώργος ___ (γράφω) ένα μήνυμα στο κινητό του.'
   );
   
+  // Extended verbs database with multiple tenses
   const verbs = [
+    // Present tense (Ενεστώτας) - Active voice
     {
       verb: 'γράφω',
       translation: 'to write',
@@ -82,6 +84,69 @@ const GreekConjugationApp = () => {
         εσείς: 'τρώτε',
         αυτοί: 'τρώνε'
       }
+    },
+    // Past tense (Αόριστος) - Active voice
+    {
+      verb: 'γράφω',
+      translation: 'to write',
+      tense: 'αόριστος',
+      type: 'ενεργητική φωνή',
+      group: 'A',
+      conjugation: {
+        εγώ: 'έγραψα',
+        εσύ: 'έγραψες',
+        αυτός: 'έγραψε',
+        εμείς: 'γράψαμε',
+        εσείς: 'γράψατε',
+        αυτοί: 'έγραψαν'
+      }
+    },
+    {
+      verb: 'μιλάω',
+      translation: 'to speak',
+      tense: 'αόριστος',
+      type: 'ενεργητική φωνή',
+      group: 'A',
+      conjugation: {
+        εγώ: 'μίλησα',
+        εσύ: 'μίλησες',
+        αυτός: 'μίλησε',
+        εμείς: 'μιλήσαμε',
+        εσείς: 'μιλήσατε',
+        αυτοί: 'μίλησαν'
+      }
+    },
+    // Future tense (Μέλλοντας) - Active voice
+    {
+      verb: 'γράφω',
+      translation: 'to write',
+      tense: 'μέλλοντας',
+      type: 'ενεργητική φωνή',
+      group: 'A',
+      conjugation: {
+        εγώ: 'θα γράψω',
+        εσύ: 'θα γράψεις',
+        αυτός: 'θα γράψει',
+        εμείς: 'θα γράψουμε',
+        εσείς: 'θα γράψετε',
+        αυτοί: 'θα γράψουν'
+      }
+    },
+    // Passive voice examples
+    {
+      verb: 'γράφομαι',
+      translation: 'to be written',
+      tense: 'ενεστώτας',
+      type: 'παθητική φωνή',
+      group: 'A',
+      conjugation: {
+        εγώ: 'γράφομαι',
+        εσύ: 'γράφεσαι',
+        αυτός: 'γράφεται',
+        εμείς: 'γραφόμαστε',
+        εσείς: 'γράφεστε',
+        αυτοί: 'γράφονται'
+      }
     }
   ];
   
@@ -89,20 +154,48 @@ const GreekConjugationApp = () => {
     {
       text: 'Ο Γιώργος και η Μαρία πηγαίνουν στην αγορά. Εκεί, ο Γιώργος ___ (γράφω) ένα μήνυμα στο κινητό του.',
       verb: 'γράφω',
+      tense: 'ενεστώτας',
+      type: 'ενεργητική φωνή',
       pronoun: 'αυτός',
       answer: 'γράφει'
     },
     {
       text: 'Στο πρωινό, εμείς ___ (τρώω) ψωμί με μέλι και ___ (πίνω) καφέ.',
       verb: 'τρώω',
+      tense: 'ενεστώτας',
+      type: 'ενεργητική φωνή',
       pronoun: 'εμείς',
       answer: 'τρώμε'
+    },
+    {
+      text: 'Χθες, οι φίλοι μου ___ (έρχομαι) στο σπίτι μου για δείπνο.',
+      verb: 'έρχομαι',
+      tense: 'αόριστος',
+      type: 'μέση φωνή',
+      pronoun: 'αυτοί',
+      answer: 'ήρθαν'
     }
   ];
   
+  const filterVerbsBySettings = () => {
+    return verbs.filter(verb => {
+      // Skip filtering if "all" is selected
+      const tenseMatch = settings.tense === 'all' || verb.tense === settings.tense;
+      const typeMatch = settings.type === 'all' || verb.type === settings.type;
+      const groupMatch = settings.group === 'all' || verb.group === settings.group;
+      
+      return tenseMatch && typeMatch && groupMatch;
+    });
+  };
+  
   const loadRandomVerb = () => {
-    const randomIndex = Math.floor(Math.random() * verbs.length);
-    const newVerb = verbs[randomIndex];
+    const filteredVerbs = filterVerbsBySettings();
+    
+    // If no verbs match the filter, use all verbs
+    const verbsToUse = filteredVerbs.length ? filteredVerbs : verbs;
+    
+    const randomIndex = Math.floor(Math.random() * verbsToUse.length);
+    const newVerb = verbsToUse[randomIndex];
     
     setVerbData({
       verb: newVerb.verb,
@@ -126,22 +219,41 @@ const GreekConjugationApp = () => {
   };
   
   const loadRandomStory = () => {
-    const randomIndex = Math.floor(Math.random() * stories.length);
-    const newStory = stories[randomIndex];
-    
-    setStoryContext(newStory.text);
-    // Set up just the needed verb and pronoun for the story
-    const verbObj = verbs.find(v => v.verb === newStory.verb);
-    
-    setVerbData({
-      verb: newStory.verb,
-      translation: verbObj.translation,
-      tense: verbObj.tense,
-      type: verbObj.type,
-      group: verbObj.group
+    // Filter stories by settings
+    const filteredStories = stories.filter(story => {
+      const tenseMatch = settings.tense === 'all' || story.tense === settings.tense;
+      const typeMatch = settings.type === 'all' || story.type === settings.type;
+      return tenseMatch && typeMatch;
     });
     
-    // We only need one answer in story mode
+    // If no stories match the filter, use all stories
+    const storiesToUse = filteredStories.length ? filteredStories : stories;
+    
+    const randomIndex = Math.floor(Math.random() * storiesToUse.length);
+    const newStory = storiesToUse[randomIndex];
+    
+    setStoryContext(newStory.text);
+    
+    // Find matching verb data
+    const verbObj = verbs.find(v => 
+      v.verb === newStory.verb && 
+      v.tense === newStory.tense && 
+      v.type === newStory.type
+    );
+    
+    if (verbObj) {
+      setVerbData({
+        verb: verbObj.verb,
+        translation: verbObj.translation,
+        tense: verbObj.tense,
+        type: verbObj.type,
+        group: verbObj.group
+      });
+      
+      setCorrectAnswers(verbObj.conjugation);
+    }
+    
+    // Reset user answers
     const emptyAnswers = {
       εγώ: '',
       εσύ: '',
@@ -152,13 +264,16 @@ const GreekConjugationApp = () => {
     };
     
     setUserAnswers(emptyAnswers);
-    setCorrectAnswers(verbObj.conjugation);
     setChecked(false);
   };
   
   useEffect(() => {
-    loadRandomVerb();
-  }, []);
+    if (mode === 'practice') {
+      loadRandomVerb();
+    } else {
+      loadRandomStory();
+    }
+  }, [mode]);
   
   const handleInputChange = (pronoun, value) => {
     setUserAnswers(prev => ({
@@ -189,7 +304,7 @@ const GreekConjugationApp = () => {
     } else {
       // In story mode, we only check the specific pronoun needed
       const story = stories.find(s => s.text === storyContext);
-      if (userAnswers[story.pronoun] === correctAnswers[story.pronoun]) {
+      if (story && userAnswers[story.pronoun] === correctAnswers[story.pronoun]) {
         setStreak(streak + 1);
         setScore(score + 5 + streak);
         correct = 1;
@@ -350,6 +465,10 @@ const GreekConjugationApp = () => {
                 Επόμενο
               </button>
             )}
+            
+            <button onClick={onBackToHome} className="text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
+              Επιστροφή
+            </button>
           </div>
         </div>
       </div>
