@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css'; // Make sure this is here
 import HomeScreen from './components/HomeScreen';
 import GreekConjugationApp from './components/GreekConjugationApp';
 import NounDeclinationApp from './components/NounDeclinationApp';
@@ -40,12 +41,10 @@ const App = () => {
             />;
           case 'adjective':
             return <AdjectiveApp 
-              settings={practiceSettings}
               onBackToHome={handleBackToHome}
             />;
           case 'article':
             return <ArticleApp 
-              settings={practiceSettings}
               onBackToHome={handleBackToHome}
             />;
           default:

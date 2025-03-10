@@ -48,13 +48,13 @@ const HomeScreen = ({ onStartPractice }) => {
     <div className="flex flex-col items-center justify-center p-4 bg-gray-50 min-h-screen">
       <div className="w-full max-w-md">
         <header className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-blue-600">Ελληνική Γραμματική</h1>
-          <p className="text-gray-600">Επιλέξτε τις ασκήσεις σας</p>
+          <h1 className="text-2xl font-bold text-blue-600">Greek Grammar Practice <span className="text-gray-500">(Εξάσκηση Ελληνικής Γραμματικής)</span></h1>
+          <p className="text-gray-600">Choose your exercises <span className="text-gray-500">(Επιλέξτε τις ασκήσεις σας)</span></p>
         </header>
         
         <div className="bg-white shadow-lg rounded-lg overflow-hidden border mb-6">
           <div className="bg-blue-50 border-b p-4">
-            <h2 className="text-xl font-bold text-blue-700">Τι θέλετε να εξασκήσετε;</h2>
+            <h2 className="text-xl font-bold text-blue-700">What would you like to practice? <span className="text-gray-500 text-lg">(Τι θα θέλατε να εξασκήσετε;)</span></h2>
           </div>
           
           <div className="p-6">
@@ -66,7 +66,7 @@ const HomeScreen = ({ onStartPractice }) => {
               >
                 <div className="text-center">
                   <span className="text-xl mb-2 block">🔤</span>
-                  <span className="font-medium">Ρήματα</span>
+                  <span className="font-medium">Verbs <span className="text-sm text-gray-500">(Ρήματα)</span></span>
                 </div>
               </button>
               <button 
@@ -75,7 +75,7 @@ const HomeScreen = ({ onStartPractice }) => {
               >
                 <div className="text-center">
                   <span className="text-xl mb-2 block">📝</span>
-                  <span className="font-medium">Ουσιαστικά</span>
+                  <span className="font-medium">Nouns <span className="text-sm text-gray-500">(Ουσιαστικά)</span></span>
                 </div>
               </button>
               <button 
@@ -84,7 +84,7 @@ const HomeScreen = ({ onStartPractice }) => {
               >
                 <div className="text-center">
                   <span className="text-xl mb-2 block">🏷️</span>
-                  <span className="font-medium">Επίθετα</span>
+                  <span className="font-medium">Adjectives <span className="text-sm text-gray-500">(Επίθετα)</span></span>
                 </div>
               </button>
               <button 
@@ -93,7 +93,7 @@ const HomeScreen = ({ onStartPractice }) => {
               >
                 <div className="text-center">
                   <span className="text-xl mb-2 block">🔍</span>
-                  <span className="font-medium">Άρθρα</span>
+                  <span className="font-medium">Articles <span className="text-sm text-gray-500">(Άρθρα)</span></span>
                 </div>
               </button>
             </div>
@@ -102,46 +102,46 @@ const HomeScreen = ({ onStartPractice }) => {
             {selectedMode === 'verb' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Χρόνος</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tense <span className="text-gray-500">(Χρόνος)</span></label>
                   <select 
                     value={verbSettings.tense} 
                     onChange={(e) => handleVerbSettingChange('tense', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="all">Όλοι οι χρόνοι</option>
-                    <option value="ενεστώτας">Ενεστώτας</option>
-                    <option value="αόριστος">Αόριστος</option>
-                    <option value="παρατατικός">Παρατατικός</option>
-                    <option value="μέλλοντας">Μέλλοντας</option>
-                    <option value="παρακείμενος">Παρακείμενος</option>
-                    <option value="υπερσυντέλικος">Υπερσυντέλικος</option>
+                    <option value="all">All Tenses (Όλοι οι Χρόνοι)</option>
+                    <option value="ενεστώτας">Present (Ενεστώτας)</option>
+                    <option value="αόριστος">Aorist (Αόριστος)</option>
+                    <option value="παρατατικός">Imperfect (Παρατατικός)</option>
+                    <option value="μέλλοντας">Future (Μέλλοντας)</option>
+                    <option value="παρακείμενος">Perfect (Παρακείμενος)</option>
+                    <option value="υπερσυντέλικος">Pluperfect (Υπερσυντέλικος)</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Τύπος</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Voice <span className="text-gray-500">(Φωνή)</span></label>
                   <select 
                     value={verbSettings.type} 
                     onChange={(e) => handleVerbSettingChange('type', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="all">Όλοι οι τύποι</option>
-                    <option value="ενεργητική φωνή">Ενεργητική φωνή</option>
-                    <option value="παθητική φωνή">Παθητική φωνή</option>
-                    <option value="μέση φωνή">Μέση φωνή</option>
+                    <option value="all">All Voices (Όλες οι Φωνές)</option>
+                    <option value="ενεργητική φωνή">Active (Ενεργητική φωνή)</option>
+                    <option value="παθητική φωνή">Passive (Παθητική φωνή)</option>
+                    <option value="μέση φωνή">Middle (Μέση φωνή)</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ομάδα</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Group <span className="text-gray-500">(Ομάδα)</span></label>
                   <select 
                     value={verbSettings.group} 
                     onChange={(e) => handleVerbSettingChange('group', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="all">Όλες οι ομάδες</option>
-                    <option value="A">Ομάδα Α</option>
-                    <option value="B">Ομάδα Β</option>
+                    <option value="all">All Groups (Όλες οι Ομάδες)</option>
+                    <option value="A">Group A (Ομάδα Α)</option>
+                    <option value="B">Group B (Ομάδα Β)</option>
                   </select>
                 </div>
               </div>
@@ -151,44 +151,44 @@ const HomeScreen = ({ onStartPractice }) => {
             {selectedMode === 'noun' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Πτώση</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Case <span className="text-gray-500">(Πτώση)</span></label>
                   <select 
                     value={nounSettings.case} 
                     onChange={(e) => handleNounSettingChange('case', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="all">Όλες οι πτώσεις</option>
-                    <option value="ονομαστική">Ονομαστική</option>
-                    <option value="γενική">Γενική</option>
-                    <option value="αιτιατική">Αιτιατική</option>
-                    <option value="κλητική">Κλητική</option>
+                    <option value="all">All Cases (Όλες οι Πτώσεις)</option>
+                    <option value="ονομαστική">Nominative (Ονομαστική)</option>
+                    <option value="γενική">Genitive (Γενική)</option>
+                    <option value="αιτιατική">Accusative (Αιτιατική)</option>
+                    <option value="κλητική">Vocative (Κλητική)</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Αριθμός</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Number <span className="text-gray-500">(Αριθμός)</span></label>
                   <select 
                     value={nounSettings.number} 
                     onChange={(e) => handleNounSettingChange('number', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="all">Όλοι οι αριθμοί</option>
-                    <option value="ενικός">Ενικός</option>
-                    <option value="πληθυντικός">Πληθυντικός</option>
+                    <option value="all">All Numbers (Όλοι οι Αριθμοί)</option>
+                    <option value="ενικός">Singular (Ενικός)</option>
+                    <option value="πληθυντικός">Plural (Πληθυντικός)</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Γένος</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender <span className="text-gray-500">(Γένος)</span></label>
                   <select 
                     value={nounSettings.gender} 
                     onChange={(e) => handleNounSettingChange('gender', e.target.value)}
                     className="w-full p-2 border rounded"
                   >
-                    <option value="all">Όλα τα γένη</option>
-                    <option value="αρσενικό">Αρσενικό</option>
-                    <option value="θηλυκό">Θηλυκό</option>
-                    <option value="ουδέτερο">Ουδέτερο</option>
+                    <option value="all">All Genders (Όλα τα Γένη)</option>
+                    <option value="αρσενικό">Masculine (Αρσενικό)</option>
+                    <option value="θηλυκό">Feminine (Θηλυκό)</option>
+                    <option value="ουδέτερο">Neuter (Ουδέτερο)</option>
                   </select>
                 </div>
               </div>
@@ -197,14 +197,14 @@ const HomeScreen = ({ onStartPractice }) => {
             {/* Adjective options (simplified) */}
             {selectedMode === 'adjective' && (
               <div className="p-4 bg-gray-50 rounded">
-                <p>Εξάσκηση στα επίθετα - συμφωνία με τα ουσιαστικά σε γένος, αριθμό και πτώση.</p>
+                <p>Practice adjectives - agreement with nouns in gender, number, and case. <span className="text-gray-500">(Εξάσκηση επιθέτων - συμφωνία με ουσιαστικά σε γένος, αριθμό και πτώση.)</span></p>
               </div>
             )}
             
             {/* Article options (simplified) */}
             {selectedMode === 'article' && (
               <div className="p-4 bg-gray-50 rounded">
-                <p>Εξάσκηση στη χρήση των άρθρων - οριστικά και αόριστα άρθρα.</p>
+                <p>Practice using articles - definite and indefinite articles. <span className="text-gray-500">(Εξάσκηση στη χρήση άρθρων - οριστικά και αόριστα άρθρα.)</span></p>
               </div>
             )}
           </div>
@@ -214,13 +214,13 @@ const HomeScreen = ({ onStartPractice }) => {
               onClick={startPractice}
               className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Έναρξη εξάσκησης
+              Start Practice <span className="text-gray-200">(Έναρξη Εξάσκησης)</span>
             </button>
           </div>
         </div>
         
         <div className="text-center text-sm text-gray-600">
-          <p>Ελληνική Γραμματική - Εφαρμογή Εξάσκησης</p>
+          <p>Greek Grammar - Practice Application <span className="text-gray-500">(Ελληνική Γραμματική - Εφαρμογή Εξάσκησης)</span></p>
         </div>
       </div>
     </div>
