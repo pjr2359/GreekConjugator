@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, session
 from ..models import db, Verb, Conjugation, UserProgress, PracticeSession
 from .auth import login_required
+from ..services.greek_text import GreekTextProcessor, compare_greek_texts
 from datetime import datetime, timedelta
 import random
 
@@ -111,6 +112,19 @@ def submit_answer():
         
         # Get the conjugation
         conjugation = Conjugation.query.get_or_404(conjugation_id)
+        
+        # Enhanced answer validation using Greek text processing
+        if user_answer and conjugation.form:
+            # Use the enhanced Greek text processor for validation
+            server_validation = compare_greek_texts(user_answer, conjugation.form)
+            
+            # If server validation differs from client validation, log for debugging
+            if server_validation != is_correct:
+                print(f"Validation mismatch: client={is_correct}, server={server_validation}")
+                print(f"User answer: '{user_answer}', Correct: '{conjugation.form}'")
+            
+            # Use server validation as the authoritative answer
+            is_correct = server_validation
         
         # Update or create user progress
         progress = UserProgress.query.filter_by(

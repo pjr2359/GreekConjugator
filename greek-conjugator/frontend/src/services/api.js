@@ -139,4 +139,72 @@ export const verbsService = {
   }
 };
 
+// Text validation service
+export const textValidationService = {
+  async validate(text) {
+    try {
+      const response = await api.post('/text/validate', { text });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Validation failed');
+    }
+  },
+
+  async compare(text1, text2, strict = false) {
+    try {
+      const response = await api.post('/text/compare', {
+        text1,
+        text2,
+        strict
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Comparison failed');
+    }
+  },
+
+  async transliterate(text, direction = 'to_greek') {
+    try {
+      const response = await api.post('/text/transliterate', {
+        text,
+        direction
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Transliteration failed');
+    }
+  },
+
+  async normalize(text) {
+    try {
+      const response = await api.post('/text/normalize', { text });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Normalization failed');
+    }
+  },
+
+  async checkAnswer(userAnswer, correctAnswer, tolerance = 'lenient') {
+    try {
+      const response = await api.post('/text/check-answer', {
+        user_answer: userAnswer,
+        correct_answer: correctAnswer,
+        tolerance
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Answer checking failed');
+    }
+  },
+
+  async getKeyboardMapping() {
+    try {
+      const response = await api.get('/text/keyboard-mapping');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to get keyboard mapping');
+    }
+  }
+};
+
 export default api;

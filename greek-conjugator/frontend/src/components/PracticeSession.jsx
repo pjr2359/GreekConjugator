@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import GreekKeyboard from './GreekKeyboard';
-import { verbsService } from '../services/api';
+import GreekKeyboard, { compareGreekTexts } from './GreekKeyboard';
+import { verbsService, textValidationService } from '../services/api';
 
 const PracticeSession = ({ user }) => {
   const [sessionData, setSessionData] = useState(null);
@@ -12,6 +12,8 @@ const PracticeSession = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [conjugations, setConjugations] = useState({});
+  const [validationResult, setValidationResult] = useState(null);
+  const [showHints, setShowHints] = useState(false);
 
   // Start a new practice session
   const startSession = async (sessionType = 'graded', difficulty = 1) => {
@@ -61,22 +63,18 @@ const PracticeSession = ({ user }) => {
     };
   };
 
-  // Check if answer is correct
-  const checkAnswer = (userInput, correctAnswer) => {
-    // Remove accents and normalize for comparison
-    const normalize = (text) => {
-      return text.toLowerCase()
-        .trim()
-        .replace(/[άἀἁἂἃἄἅἆἇᾀᾁᾂᾃᾄᾅᾆᾇᾲᾳᾴᾶᾷ]/g, 'α')
-        .replace(/[έἐἑἒἓἔἕ]/g, 'ε')
-        .replace(/[ήἠἡἢἣἤἥἦἧᾐᾑᾒᾓᾔᾕᾖᾗῂῃῄῆῇ]/g, 'η')
-        .replace(/[ίἰἱἲἳἴἵἶἷῐῑῒΐῖῗ]/g, 'ι')
-        .replace(/[όὀὁὂὃὄὅ]/g, 'ο')
-        .replace(/[ύὐὑὒὓὔὕὖὗῠῡῢΰῦῧ]/g, 'υ')
-        .replace(/[ώὠὡὢὣὤὥὦὧᾠᾡᾢᾣᾤᾥᾦᾧῲῳῴῶῷ]/g, 'ω');
-    };
-
-    return normalize(userInput) === normalize(correctAnswer);
+  // Enhanced answer checking with Greek text processing
+  const checkAnswer = async (userInput, correctAnswer) => {
+    try {
+      // Use the enhanced Greek text processing API
+      const result = await textValidationService.checkAnswer(userInput, correctAnswer, 'lenient');
+      setValidationResult(result);
+      return result.correct;
+    } catch (error) {
+      console.error('API validation failed, falling back to compareGreekTexts:', error);
+      // Fallback to client-side comparison
+      return await compareGreekTexts(userInput, correctAnswer, 'lenient');
+    }
   };
 
   // Submit answer
@@ -84,19 +82,20 @@ const PracticeSession = ({ user }) => {
     const question = getCurrentQuestion();
     if (!question) return;
 
-    const correct = checkAnswer(userAnswer, question.conjugation.form);
-    setIsCorrect(correct);
-    setShowResult(true);
-
-    // Update score
-    const newScore = {
-      correct: score.correct + (correct ? 1 : 0),
-      total: score.total + 1
-    };
-    setScore(newScore);
-
-    // Submit to backend
+    setLoading(true);
     try {
+      const correct = await checkAnswer(userAnswer, question.conjugation.form);
+      setIsCorrect(correct);
+      setShowResult(true);
+
+      // Update score
+      const newScore = {
+        correct: score.correct + (correct ? 1 : 0),
+        total: score.total + 1
+      };
+      setScore(newScore);
+
+      // Submit to backend
       await verbsService.submitAnswer(
         sessionData.session_id,
         question.conjugation.id,
@@ -105,6 +104,10 @@ const PracticeSession = ({ user }) => {
       );
     } catch (error) {
       console.error('Failed to submit answer:', error);
+      // Still show result even if API fails
+      setShowResult(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,6 +115,7 @@ const PracticeSession = ({ user }) => {
   const nextQuestion = () => {
     setShowResult(false);
     setUserAnswer('');
+    setValidationResult(null);
 
     if (currentQuestionIndex + 1 >= sessionData.verbs.length) {
       setSessionComplete(true);
@@ -225,26 +229,53 @@ const PracticeSession = ({ user }) => {
             value={userAnswer}
             onTextChange={setUserAnswer}
             placeholder="Type your answer..."
+            showValidation={true}
+            correctAnswer={question.conjugation.form}
+            autoTransliterate={true}
           />
 
-          <div className="mt-4 text-center">
+          <div className="flex justify-center gap-4 mt-4">
             <button
               onClick={submitAnswer}
-              disabled={!userAnswer.trim()}
-              className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              disabled={!userAnswer.trim() || loading}
+              className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
+              {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
               Submit Answer
             </button>
+            
+            <button
+              onClick={() => setShowHints(!showHints)}
+              className="bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              {showHints ? 'Hide Hints' : 'Show Hints'}
+            </button>
           </div>
+
+          {/* Enhanced hints section */}
+          {showHints && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2">💡 Hints:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• <strong>Tense:</strong> {question.conjugation.tense}</li>
+                <li>• <strong>Mood:</strong> {question.conjugation.mood}</li>
+                <li>• <strong>Voice:</strong> {question.conjugation.voice}</li>
+                <li>• <strong>Person:</strong> {question.conjugation.person}</li>
+                <li>• <strong>Number:</strong> {question.conjugation.number}</li>
+                <li>• You can type Latin characters (e.g., "grapho" → "γραφω")</li>
+                <li>• Accents are optional for matching - focus on the base letters first</li>
+              </ul>
+            </div>
+          )}
         </div>
       ) : (
-        /* Result display */
+        /* Enhanced result display */
         <div className="mb-6">
           <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border`}>
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-3">
               <span className="text-2xl mr-2">{isCorrect ? '✅' : '❌'}</span>
               <span className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                {isCorrect ? 'Correct!' : 'Incorrect'}
+                {validationResult?.feedback || (isCorrect ? 'Correct!' : 'Incorrect')}
               </span>
             </div>
 
@@ -252,6 +283,27 @@ const PracticeSession = ({ user }) => {
               <p><strong>Your answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{userAnswer}</span></p>
               {!isCorrect && (
                 <p><strong>Correct answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{question.conjugation.form}</span></p>
+              )}
+              
+              {/* Show similarity score and suggestions from enhanced validation */}
+              {validationResult && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  {validationResult.similarity_score !== undefined && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Similarity:</strong> {Math.round(validationResult.similarity_score * 100)}%
+                    </p>
+                  )}
+                  {validationResult.suggestions && validationResult.suggestions.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600"><strong>Suggestions:</strong></p>
+                      <ul className="text-sm text-gray-600 ml-4">
+                        {validationResult.suggestions.map((suggestion, index) => (
+                          <li key={index}>• {suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
