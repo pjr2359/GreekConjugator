@@ -85,7 +85,7 @@ def start_practice_session():
             session_type=session_type,
             questions_attempted=0,
             correct_answers=0,
-            verbs_practiced=[verb.id for verb in verbs]
+            verbs_practiced=','.join(str(verb.id) for verb in verbs)  # Convert list to string for SQLite
         )
         db.session.add(practice_session)
         db.session.commit()
@@ -154,9 +154,11 @@ def submit_answer():
             progress = update_spaced_repetition(progress, quality=0)  # Wrong answer
             # Track common mistakes
             if progress.common_mistakes:
-                progress.common_mistakes.append(user_answer)
+                mistakes_list = progress.common_mistakes.split(',') if progress.common_mistakes else []
+                mistakes_list.append(user_answer)
+                progress.common_mistakes = ','.join(mistakes_list)
             else:
-                progress.common_mistakes = [user_answer]
+                progress.common_mistakes = user_answer
         
         # Update practice session
         practice_session = PracticeSession.query.get(session_id)

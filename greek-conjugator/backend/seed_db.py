@@ -5,8 +5,8 @@ import os
 # Add the project directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from backend.app import create_app
-from backend.app.models import db, Verb, Conjugation
+from app import create_app
+from app.models import db, Verb, Conjugation
 
 app = create_app()
 
@@ -194,24 +194,62 @@ SAMPLE_VERBS = [
     }
 ]
 
-# Sample conjugations for γράφω (to write)
-SAMPLE_CONJUGATIONS = [
-    # Present tense
-    {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'γράφω'},
-    {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'γράφεις'},
-    {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'γράφει'},
-    {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'γράφουμε'},
-    {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'γράφετε'},
-    {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'γράφουν'},
-    
-    # Aorist tense
-    {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'έγραψα'},
-    {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'έγραψες'},
-    {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'έγραψε'},
-    {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'γράψαμε'},
-    {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'γράψατε'},
-    {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'έγραψαν'},
-]
+# Sample conjugations for multiple verbs
+VERB_CONJUGATIONS = {
+    'γράφω': [
+        # Present tense
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'γράφω'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'γράφεις'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'γράφει'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'γράφουμε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'γράφετε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'γράφουν'},
+        
+        # Aorist tense
+        {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'έγραψα'},
+        {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'έγραψες'},
+        {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'έγραψε'},
+        {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'γράψαμε'},
+        {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'γράψατε'},
+        {'tense': 'aorist', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'έγραψαν'},
+    ],
+    'είμαι': [
+        # Present tense
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'είμαι'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'είσαι'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'είναι'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'είμαστε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'είστε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'είναι'},
+    ],
+    'έχω': [
+        # Present tense
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'έχω'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'έχεις'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'έχει'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'έχουμε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'έχετε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'έχουν'},
+    ],
+    'κάνω': [
+        # Present tense
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'κάνω'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'κάνεις'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'κάνει'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'κάνουμε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'κάνετε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'κάνουν'},
+    ],
+    'λέω': [
+        # Present tense
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'singular', 'form': 'λέω'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'singular', 'form': 'λες'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'singular', 'form': 'λέει'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '1st', 'number': 'plural', 'form': 'λέμε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '2nd', 'number': 'plural', 'form': 'λέτε'},
+        {'tense': 'present', 'mood': 'indicative', 'voice': 'active', 'person': '3rd', 'number': 'plural', 'form': 'λένε'},
+    ]
+}
 
 def seed_database():
     with app.app_context():
@@ -222,14 +260,19 @@ def seed_database():
         for verb_data in SAMPLE_VERBS:
             existing_verb = Verb.query.filter_by(infinitive=verb_data['infinitive']).first()
             if not existing_verb:
-                verb = Verb(**verb_data)
+                # Convert tags list to string for SQLite storage
+                verb_data_copy = verb_data.copy()
+                if 'tags' in verb_data_copy and isinstance(verb_data_copy['tags'], list):
+                    verb_data_copy['tags'] = ', '.join(verb_data_copy['tags'])
+                
+                verb = Verb(**verb_data_copy)
                 db.session.add(verb)
                 db.session.flush()  # Get the ID
                 
-                # Add conjugations for γράφω as an example
-                if verb_data['infinitive'] == 'γράφω':
+                # Add conjugations for verbs that have them defined
+                if verb_data['infinitive'] in VERB_CONJUGATIONS:
                     print(f"📝 Adding conjugations for {verb_data['infinitive']}...")
-                    for conj_data in SAMPLE_CONJUGATIONS:
+                    for conj_data in VERB_CONJUGATIONS[verb_data['infinitive']]:
                         conjugation = Conjugation(
                             verb_id=verb.id,
                             **conj_data

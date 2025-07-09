@@ -9,7 +9,7 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__, static_folder='../../frontend/build')
-    CORS(app, supports_credentials=True)
+    CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
 
     # Use SQLite for local development
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///greek_conjugator_dev.db'
