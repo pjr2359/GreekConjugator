@@ -14,12 +14,13 @@ const PracticeSession = ({ user }) => {
   const [conjugations, setConjugations] = useState({});
   const [validationResult, setValidationResult] = useState(null);
   const [showHints, setShowHints] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
 
   // Start a new practice session
   const startSession = async (sessionType = 'graded', difficulty = 1) => {
     setLoading(true);
     try {
-      const session = await verbsService.startPracticeSession(sessionType, difficulty, 10);
+      const session = await verbsService.startPracticeSession(sessionType, difficulty, 5);
       setSessionData(session);
 
       // Load conjugations for all verbs in the session
@@ -53,14 +54,22 @@ const PracticeSession = ({ user }) => {
 
     if (verbConjugations.length === 0) return null;
 
-    // Pick a random conjugation for this question
-    const randomConjugation = verbConjugations[Math.floor(Math.random() * verbConjugations.length)];
+    // If we don't have a current question or the verb has changed, generate a new one
+    if (!currentQuestion || currentQuestion.verb.id !== verb.id) {
+      // Pick a random conjugation for this question
+      const randomConjugation = verbConjugations[Math.floor(Math.random() * verbConjugations.length)];
 
-    return {
-      verb,
-      conjugation: randomConjugation,
-      prompt: `Conjugate "${verb.infinitive}" (${verb.english}) in ${randomConjugation.tense} tense, ${randomConjugation.mood} mood, ${randomConjugation.person} person ${randomConjugation.number}`
-    };
+      const newQuestion = {
+        verb,
+        conjugation: randomConjugation,
+        prompt: `Conjugate "${verb.infinitive}" (${verb.english}) in ${randomConjugation.tense} tense, ${randomConjugation.mood} mood, ${randomConjugation.person} person ${randomConjugation.number}`
+      };
+
+      setCurrentQuestion(newQuestion);
+      return newQuestion;
+    }
+
+    return currentQuestion;
   };
 
   // Enhanced answer checking with Greek text processing
@@ -116,18 +125,33 @@ const PracticeSession = ({ user }) => {
     setShowResult(false);
     setUserAnswer('');
     setValidationResult(null);
+    setCurrentQuestion(null); // Clear current question to force generation of new one
 
-    if (currentQuestionIndex + 1 >= sessionData.verbs.length) {
+    // Check if we've completed enough questions (let's say 5 questions per session)
+    const questionsPerSession = 5;
+    if (score.total >= questionsPerSession) {
       setSessionComplete(true);
     } else {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      // Try to find the next verb with conjugations
+      let nextIndex = currentQuestionIndex + 1;
+      while (nextIndex < sessionData.verbs.length) {
+        const nextVerb = sessionData.verbs[nextIndex];
+        const nextVerbConjugations = conjugations[nextVerb.id] || [];
+        if (nextVerbConjugations.length > 0) {
+          setCurrentQuestionIndex(nextIndex);
+          return;
+        }
+        nextIndex++;
+      }
+      // If we can't find more verbs with conjugations, end the session
+      setSessionComplete(true);
     }
   };
 
   // Start session on component mount
   useEffect(() => {
     if (user && !sessionData) {
-      // startSession(); // Prevent automatic session start
+      startSession(); // Start session automatically when component loads
     }
   }, [user, sessionData]);
 
@@ -243,7 +267,7 @@ const PracticeSession = ({ user }) => {
               {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
               Submit Answer
             </button>
-            
+
             <button
               onClick={() => setShowHints(!showHints)}
               className="bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors"
@@ -284,7 +308,7 @@ const PracticeSession = ({ user }) => {
               {!isCorrect && (
                 <p><strong>Correct answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{question.conjugation.form}</span></p>
               )}
-              
+
               {/* Show similarity score and suggestions from enhanced validation */}
               {validationResult && (
                 <div className="mt-3 pt-3 border-t border-gray-200">

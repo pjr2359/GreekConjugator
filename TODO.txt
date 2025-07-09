@@ -1,0 +1,51 @@
+Greek Conjugator App - TODO
+==========================
+
+Current State:
+--------------
+- User authentication (register/login/logout) is working
+- Smart practice for verbs is functional (session auto-starts, question selection is stable)
+- Session ends after 5 questions or when no more verbs with conjugations are available
+- Progress dashboard and stats are displayed
+- Greek text normalization and answer validation are implemented
+- Only a few verbs have full conjugation data in the database
+
+Known Issues / Limitations:
+--------------------------
+- Smart practice session length is limited by number of verbs with conjugations
+- Some verbs in the database have no conjugations (need to expand seed data)
+- No audio or pronunciation support
+- No advanced grammar explanations or hints
+- No mobile/responsive optimizations
+- No user settings or customization
+- No admin interface for adding/editing verbs/conjugations
+
+Next Steps / Improvements:
+--------------------------
+1. **Expand Verb Data:**
+   - Add more verbs and full conjugation tables to backend/seed_db.py
+   - Consider importing from open-source Greek verb datasets
+2. **Improve Smart Practice:**
+   - Make session length dynamic based on available data
+   - Add spaced repetition review sessions (due cards)
+   - Personalize verb selection based on user progress
+3. **Add Audio Support:**
+   - Integrate audio for verb pronunciation
+   - Add audio playback buttons in practice sessions
+4. **Enhance Grammar Coverage:**
+   - Add smart/traditional practice for nouns, adjectives, articles
+   - Add grammar explanations and hints
+5. **UI/UX Improvements:**
+   - Improve mobile responsiveness and accessibility
+   - Add dark mode and user settings
+6. **Admin Tools:**
+   - Build admin interface for managing verbs/conjugations
+   - Allow bulk import/export of data
+7. **Testing & QA:**
+   - Add unit and integration tests for backend and frontend
+   - Improve error handling and user feedback
+8. **Deployment:**
+   - Prepare for production deployment (Docker, HTTPS, etc.)
+   - Add documentation for deployment and scaling
+
+See context.txt for app purpose and architecture. 

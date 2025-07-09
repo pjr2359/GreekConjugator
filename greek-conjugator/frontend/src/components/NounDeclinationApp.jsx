@@ -159,6 +159,7 @@ const NounDeclinationApp = ({ settings, onBackToHome }) => {
   
   useEffect(() => {
     loadRandomNoun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleInputChange = (caseNumber, value) => {

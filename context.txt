@@ -1,0 +1,54 @@
+Greek Conjugator App - Context
+==============================
+
+Purpose:
+--------
+The Greek Conjugator is a full-stack web application designed to help users practice and master Greek verb conjugations (and, in the future, other grammar topics like nouns, adjectives, and articles). It uses spaced repetition and smart practice algorithms to optimize learning and retention.
+
+Key Features:
+-------------
+- User authentication (register/login/logout)
+- Smart practice sessions for Greek verbs using spaced repetition
+- Traditional practice for verbs, nouns, adjectives, and articles
+- Progress tracking and statistics dashboard
+- Greek text normalization and answer validation (accent-insensitive)
+- Modern React frontend with Tailwind CSS
+- Flask backend with SQLite database
+
+Architecture:
+-------------
+- Frontend: React (with functional components, hooks, and Tailwind CSS)
+- Backend: Flask (REST API, SQLAlchemy ORM, CORS, session management)
+- Database: SQLite (for local development)
+- Authentication: Session-based (Flask-Session)
+- Deployment: Designed for local development, but can be extended for production
+
+Learning Model:
+---------------
+- Uses spaced repetition (SM-2 algorithm) to schedule reviews
+- Tracks user progress, accuracy, and streaks
+- Smart practice selects verbs and conjugations based on user history and spaced repetition intervals
+
+Goals:
+------
+- Help learners of Greek efficiently master verb conjugations and other grammar
+- Provide a fun, interactive, and data-driven learning experience
+- Be extensible to other grammar topics (nouns, adjectives, articles, etc.)
+- Serve as a reference implementation for language learning apps
+
+Current Limitations:
+--------------------
+- Only a handful of verbs have full conjugation data in the seed database
+- Smart practice session length is limited by the number of verbs with conjugations
+- No audio or advanced grammar explanations yet
+- No mobile app (web only)
+
+How to Improve:
+---------------
+- Add more verbs and full conjugation data to the seed database
+- Expand smart practice to cover more grammar topics
+- Add audio, hints, and grammar explanations
+- Improve UI/UX for mobile and accessibility
+- Add user settings and customization
+
+For more details, see TODO.txt for next steps and planned improvements. 

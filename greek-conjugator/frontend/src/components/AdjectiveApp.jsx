@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const AdjectiveApp = ({ onBackToHome }) => {
   const [adjectiveData, setAdjectiveData] = useState({
@@ -165,7 +165,7 @@ const AdjectiveApp = ({ onBackToHome }) => {
   const cases = ['ονομαστική', 'γενική', 'αιτιατική'];
   const numbers = ['ενικός', 'πληθυντικός'];
   
-  const loadRandomAdjective = () => {
+  const loadRandomAdjective = useCallback(() => {
     // Select a random adjective
     const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
     
@@ -194,11 +194,12 @@ const AdjectiveApp = ({ onBackToHome }) => {
     
     setUserAnswer('');
     setChecked(false);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   useEffect(() => {
     loadRandomAdjective();
-  }, []);
+  }, [loadRandomAdjective]);
   
   const handleAnswerChange = (value) => {
     setUserAnswer(value);

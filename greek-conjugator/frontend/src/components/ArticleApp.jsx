@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const ArticleApp = ({ onBackToHome }) => {
   const [currentQuestion, setCurrentQuestion] = useState({
@@ -146,16 +146,17 @@ const ArticleApp = ({ onBackToHome }) => {
     };
   };
   
-  const loadNewQuestion = () => {
+  const loadNewQuestion = useCallback(() => {
     const newQuestion = generateQuestion();
     setCurrentQuestion(newQuestion);
     setUserAnswer('');
     setChecked(false);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   useEffect(() => {
     loadNewQuestion();
-  }, []);
+  }, [loadNewQuestion]);
   
   const handleAnswerChange = (value) => {
     setUserAnswer(value);

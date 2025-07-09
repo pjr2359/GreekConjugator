@@ -273,6 +273,7 @@ const GreekConjugationApp = ({ settings, onBackToHome }) => {
     } else {
       loadRandomStory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
   
   const handleInputChange = (pronoun, value) => {
