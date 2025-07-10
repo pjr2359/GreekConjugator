@@ -491,6 +491,8 @@ tokens.txt
 private.key
 *.private
 
+
+greek-conjugator/kaikki.org-dictionary-Greek.jsonl
 kaikki.org-dictionary-Greek.jsonl
 
 # Comments for future developers
