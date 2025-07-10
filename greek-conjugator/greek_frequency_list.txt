@@ -1,0 +1,56 @@
+# Greek Frequency List - Common Verbs
+# Format: one word per line (you can add frequency rank after tab if desired)
+# This is a sample list - replace with your actual frequency data
+
+# Most common Greek verbs (top 50-100)
+έχω
+είμαι
+κάνω
+λέω
+πάω
+έρχομαι
+βλέπω
+θέλω
+μπορώ
+γράφω
+διαβάζω
+μαθαίνω
+δουλεύω
+ζω
+τρώω
+πίνω
+κοιμάμαι
+ξυπνάω
+αγαπώ
+φιλώ
+γνωρίζω
+θυμάμαι
+ξεχνώ
+νομίζω
+πιστεύω
+αισθάνομαι
+ακούω
+μιλώ
+ρωτάω
+απαντάω
+αγοράζω
+πουλάω
+πληρώνω
+παίρνω
+δίνω
+φέρνω
+παίρνω
+βάζω
+βγάζω
+ανοίγω
+κλείνω
+αλλάζω
+καθαρίζω
+πλένω
+μαγειρεύω
+ψήνω
+ψάχνω
+βρίσκω
+χάνω
+αποφασίζω
+επιλέγω 
