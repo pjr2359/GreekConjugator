@@ -33,3 +33,9 @@ backend/.env
 # General
 .DS_Store
 *.log
+
+# Large data files
+kaikki.org-dictionary-Greek.jsonl
+extracted_verbs.json
+import_verbs.sql
+greek_5000_words.txt
