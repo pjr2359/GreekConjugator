@@ -491,6 +491,8 @@ tokens.txt
 private.key
 *.private
 
+kaikki.org-dictionary-Greek.jsonl
+
 # Comments for future developers
 # ==============================
 # This .gitignore covers:
