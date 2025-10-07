@@ -79,8 +79,12 @@ def start_practice_session():
         verbs_with_conjugations = Verb.query.join(Conjugation).filter(Verb.difficulty <= difficulty_level).distinct().all()
         print(f"DEBUG: Found {len(verbs_with_conjugations)} verbs with conjugations for difficulty <= {difficulty_level}")
         
-        # Select a subset for this session
-        verbs = verbs_with_conjugations[:verb_count] if len(verbs_with_conjugations) >= verb_count else verbs_with_conjugations
+        # Randomly select a subset for this session to provide variety
+        if len(verbs_with_conjugations) >= verb_count:
+            verbs = random.sample(verbs_with_conjugations, verb_count)
+        else:
+            verbs = verbs_with_conjugations
+        random.shuffle(verbs)  # Shuffle the order for additional randomness
         print(f"DEBUG: Selected {len(verbs)} verbs for practice session")
         
         if not verbs:
@@ -143,17 +147,22 @@ def submit_answer():
             progress = UserProgress(
                 user_id=user_id,
                 verb_id=conjugation.verb_id,
-                conjugation_id=conjugation_id
+                conjugation_id=conjugation_id,
+                attempts=0,
+                correct_attempts=0,
+                streak=0,
+                ease_factor=2.50,
+                interval_days=1
             )
             db.session.add(progress)
         
         # Update progress statistics
-        progress.attempts += 1
+        progress.attempts = (progress.attempts or 0) + 1
         progress.last_attempt = datetime.utcnow()
         
         if is_correct:
-            progress.correct_attempts += 1
-            progress.streak += 1
+            progress.correct_attempts = (progress.correct_attempts or 0) + 1
+            progress.streak = (progress.streak or 0) + 1
             # Implement spaced repetition algorithm
             progress = update_spaced_repetition(progress, quality=4)  # Good answer
         else:
@@ -170,9 +179,9 @@ def submit_answer():
         # Update practice session
         practice_session = PracticeSession.query.get(session_id)
         if practice_session:
-            practice_session.questions_attempted += 1
+            practice_session.questions_attempted = (practice_session.questions_attempted or 0) + 1
             if is_correct:
-                practice_session.correct_answers += 1
+                practice_session.correct_answers = (practice_session.correct_answers or 0) + 1
         
         db.session.commit()
         
@@ -183,7 +192,10 @@ def submit_answer():
             'next_review': progress.next_review.isoformat() if progress.next_review else None
         })
     except Exception as e:
-        return jsonify({'error': 'Failed to submit answer'}), 500
+        print(f"Error in submit_answer: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to submit answer: {str(e)}'}), 500
 
 @bp.route('/practice/review', methods=['GET'])
 @login_required
