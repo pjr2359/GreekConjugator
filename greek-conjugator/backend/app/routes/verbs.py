@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, session
 from ..models import db, Verb, Conjugation, UserProgress, PracticeSession
 from .auth import login_required
 from ..services.greek_text import GreekTextProcessor, compare_greek_texts
+from ..services.skill import calculate_skill_level
 from datetime import datetime, timedelta
 import random
 
@@ -260,6 +261,7 @@ def get_user_stats():
         total_correct = db.session.query(db.func.sum(UserProgress.correct_attempts)).filter_by(user_id=user_id).scalar() or 0
         
         accuracy_rate = (total_correct / total_attempts * 100) if total_attempts > 0 else 0
+        skill_level = calculate_skill_level(total_correct, accuracy_rate)
         
         # Get recent sessions
         recent_sessions = PracticeSession.query.filter_by(user_id=user_id).order_by(PracticeSession.created_at.desc()).limit(10).all()
@@ -276,6 +278,7 @@ def get_user_stats():
             'total_attempts': total_attempts,
             'total_correct': total_correct,
             'accuracy_rate': round(accuracy_rate, 2),
+            'skill_level': skill_level,
             'due_cards': due_cards,
             'recent_sessions': [session.to_dict() for session in recent_sessions]
         })
