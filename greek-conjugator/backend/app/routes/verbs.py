@@ -62,19 +62,25 @@ def start_practice_session():
     try:
         data = request.get_json()
         session_type = data.get('session_type', 'graded')
-        difficulty_level = data.get('difficulty', 1)
+        difficulty_level = data.get('difficulty', 3)  # Default to max difficulty to include all verbs
         verb_count = data.get('verb_count', 10)
         
         user_id = session['user_id']
         
-        # Get verbs based on user's subscription tier
-        user_tier = session.get('subscription_tier', 'free')
-        if user_tier == 'free':
-            # Limit to first 50 verbs for free users
-            verbs = Verb.query.filter(Verb.frequency <= 50).order_by(Verb.frequency).limit(verb_count).all()
-        else:
-            # Premium users get access to all verbs
-            verbs = Verb.query.filter(Verb.difficulty <= difficulty_level).order_by(Verb.frequency).limit(verb_count).all()
+        # All users get access to all verbs with reasonable difficulty filtering
+        if difficulty_level < 3:
+            difficulty_level = 3  # Ensure we get a reasonable number of verbs
+        
+        # Debug logging
+        print(f"DEBUG: Starting practice session with difficulty={difficulty_level}, verb_count={verb_count}")
+        
+        # Get all verbs with conjugations for this difficulty level
+        verbs_with_conjugations = Verb.query.join(Conjugation).filter(Verb.difficulty <= difficulty_level).distinct().all()
+        print(f"DEBUG: Found {len(verbs_with_conjugations)} verbs with conjugations for difficulty <= {difficulty_level}")
+        
+        # Select a subset for this session
+        verbs = verbs_with_conjugations[:verb_count] if len(verbs_with_conjugations) >= verb_count else verbs_with_conjugations
+        print(f"DEBUG: Selected {len(verbs)} verbs for practice session")
         
         if not verbs:
             return jsonify({'error': 'No verbs found for practice'}), 404

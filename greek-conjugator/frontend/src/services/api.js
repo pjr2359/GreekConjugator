@@ -93,7 +93,7 @@ export const verbsService = {
     }
   },
 
-  async startPracticeSession(sessionType = 'graded', difficulty = 1, verbCount = 10) {
+  async startPracticeSession(sessionType = 'graded', difficulty = 3, verbCount = 20) {
     try {
       const response = await api.post('/verbs/practice/session', {
         session_type: sessionType,

@@ -11,8 +11,9 @@ def create_app():
     app = Flask(__name__, static_folder='../../frontend/build')
     CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
 
-    # Use SQLite for local development
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///greek_conjugator_dev.db'
+    # Use SQLite for local development - point to the main database with full dataset
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'greek_conjugator_dev.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 

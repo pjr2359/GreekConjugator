@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GreekKeyboard, { compareGreekTexts } from './GreekKeyboard';
 import { verbsService, textValidationService } from '../services/api';
 
-const PracticeSession = ({ user }) => {
+const PracticeSession = ({ user, onBackToHome }) => {
   const [sessionData, setSessionData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -15,12 +15,20 @@ const PracticeSession = ({ user }) => {
   const [validationResult, setValidationResult] = useState(null);
   const [showHints, setShowHints] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [isEndlessMode, setIsEndlessMode] = useState(true); // Default to endless mode
+  const [practiceStats, setPracticeStats] = useState({
+    totalQuestions: 0,
+    correctAnswers: 0,
+    accuracy: 0,
+    streak: 0,
+    maxStreak: 0
+  });
 
   // Start a new practice session
-  const startSession = async (sessionType = 'graded', difficulty = 1) => {
+  const startSession = async (sessionType = 'graded', difficulty = 3) => {
     setLoading(true);
     try {
-      const session = await verbsService.startPracticeSession(sessionType, difficulty, 5);
+      const session = await verbsService.startPracticeSession(sessionType, difficulty, 20);
       setSessionData(session);
 
       // Load conjugations for all verbs in the session
@@ -38,6 +46,12 @@ const PracticeSession = ({ user }) => {
       setCurrentQuestionIndex(0);
       setScore({ correct: 0, total: 0 });
       setSessionComplete(false);
+      setPracticeStats(prev => ({
+        ...prev,
+        totalQuestions: prev.totalQuestions,
+        correctAnswers: prev.correctAnswers,
+        accuracy: prev.totalQuestions > 0 ? Math.round((prev.correctAnswers / prev.totalQuestions) * 100) : 0
+      }));
     } catch (error) {
       console.error('Failed to start session:', error);
     } finally {
@@ -104,6 +118,20 @@ const PracticeSession = ({ user }) => {
       };
       setScore(newScore);
 
+      // Update practice stats
+      const newTotalQuestions = practiceStats.totalQuestions + 1;
+      const newCorrectAnswers = practiceStats.correctAnswers + (correct ? 1 : 0);
+      const newStreak = correct ? practiceStats.streak + 10 : 0;
+      const newMaxStreak = Math.max(practiceStats.maxStreak, newStreak);
+
+      setPracticeStats({
+        totalQuestions: newTotalQuestions,
+        correctAnswers: newCorrectAnswers,
+        accuracy: Math.round((newCorrectAnswers / newTotalQuestions) * 100),
+        streak: newStreak,
+        maxStreak: newMaxStreak
+      });
+
       // Submit to backend
       await verbsService.submitAnswer(
         sessionData.session_id,
@@ -127,25 +155,43 @@ const PracticeSession = ({ user }) => {
     setValidationResult(null);
     setCurrentQuestion(null); // Clear current question to force generation of new one
 
-    // Check if we've completed enough questions (let's say 5 questions per session)
-    const questionsPerSession = 5;
-    if (score.total >= questionsPerSession) {
-      setSessionComplete(true);
-    } else {
-      // Try to find the next verb with conjugations
+    if (isEndlessMode) {
+      // In endless mode, just move to the next verb or cycle back
       let nextIndex = currentQuestionIndex + 1;
-      while (nextIndex < sessionData.verbs.length) {
-        const nextVerb = sessionData.verbs[nextIndex];
-        const nextVerbConjugations = conjugations[nextVerb.id] || [];
-        if (nextVerbConjugations.length > 0) {
-          setCurrentQuestionIndex(nextIndex);
-          return;
-        }
-        nextIndex++;
+      if (nextIndex >= sessionData.verbs.length) {
+        // Cycle back to the beginning for endless practice
+        nextIndex = 0;
       }
-      // If we can't find more verbs with conjugations, end the session
-      setSessionComplete(true);
+      setCurrentQuestionIndex(nextIndex);
+    } else {
+      // Fixed session mode (5 questions)
+      const questionsPerSession = 5;
+      if (score.total >= questionsPerSession) {
+        setSessionComplete(true);
+      } else {
+        // Try to find the next verb with conjugations
+        let nextIndex = currentQuestionIndex + 1;
+        while (nextIndex < sessionData.verbs.length) {
+          const nextVerb = sessionData.verbs[nextIndex];
+          const nextVerbConjugations = conjugations[nextVerb.id] || [];
+          if (nextVerbConjugations.length > 0) {
+            setCurrentQuestionIndex(nextIndex);
+            return;
+          }
+          nextIndex++;
+        }
+        // If we can't find more verbs with conjugations, end the session
+        setSessionComplete(true);
+      }
     }
+  };
+
+  // Toggle between endless and fixed session modes
+  const toggleMode = () => {
+    setIsEndlessMode(!isEndlessMode);
+    setSessionComplete(false);
+    setCurrentQuestionIndex(0);
+    setScore({ correct: 0, total: 0 });
   };
 
   // Start session on component mount
@@ -165,7 +211,7 @@ const PracticeSession = ({ user }) => {
     );
   }
 
-  if (sessionComplete) {
+  if (sessionComplete && !isEndlessMode) {
     const accuracy = Math.round((score.correct / score.total) * 100);
     return (
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -178,17 +224,30 @@ const PracticeSession = ({ user }) => {
 
           <div className="space-y-4">
             <button
-              onClick={() => startSession('graded', 1)}
+              onClick={() => startSession('graded', 3)}
               className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Start New Session
             </button>
             <button
-              onClick={() => startSession('flashcards', 1)}
+              onClick={() => {
+                setIsEndlessMode(true);
+                setSessionComplete(false);
+                setCurrentQuestionIndex(0);
+                setScore({ correct: 0, total: 0 });
+              }}
               className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
             >
-              Try Flashcard Mode
+              Switch to Endless Mode
             </button>
+            {onBackToHome && (
+              <button
+                onClick={onBackToHome}
+                className="w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Back to Home
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -213,19 +272,72 @@ const PracticeSession = ({ user }) => {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      {/* Progress bar */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Question {currentQuestionIndex + 1} of {sessionData?.verbs.length || 0}</span>
-          <span>Score: {score.correct}/{score.total}</span>
+      {/* Header with navigation and mode toggle */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-4">
+          {onBackToHome && (
+            <button
+              onClick={onBackToHome}
+              className="bg-gray-50 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
+            >
+              ← Home
+            </button>
+          )}
+          <h1 className="text-xl font-bold text-gray-800">
+            {isEndlessMode ? 'Endless Practice' : 'Practice Session'}
+          </h1>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentQuestionIndex + 1) / (sessionData?.verbs.length || 1)) * 100}%` }}
-          ></div>
-        </div>
+        <button
+          onClick={toggleMode}
+          className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors text-sm"
+        >
+          {isEndlessMode ? 'Switch to Session Mode' : 'Switch to Endless Mode'}
+        </button>
       </div>
+
+      {/* Real-time practice statistics */}
+      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+        <h3 className="font-semibold text-blue-800 mb-2">📊 Practice Statistics</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 text-sm">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{practiceStats.totalQuestions}</div>
+            <div className="text-gray-600">Total Questions</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{practiceStats.correctAnswers}</div>
+            <div className="text-gray-600">Correct Answers</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{practiceStats.accuracy}%</div>
+            <div className="text-gray-600">Accuracy</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">{practiceStats.streak}</div>
+            <div className="text-gray-600">Current Streak</div>
+          </div>
+        </div>
+        {practiceStats.maxStreak > 0 && (
+          <div className="text-center mt-2 text-sm text-gray-600">
+            Best streak: {practiceStats.maxStreak} 🔥
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar (only for session mode) */}
+      {!isEndlessMode && (
+        <div className="mb-6">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Question {currentQuestionIndex + 1} of {sessionData?.verbs.length || 0}</span>
+            <span>Score: {score.correct}/{score.total}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${((currentQuestionIndex + 1) / (sessionData?.verbs.length || 1)) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
 
       {/* Question */}
       <div className="mb-6">
@@ -337,7 +449,7 @@ const PracticeSession = ({ user }) => {
               onClick={nextQuestion}
               className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              {currentQuestionIndex + 1 >= sessionData.verbs.length ? 'Finish Session' : 'Next Question'}
+              {isEndlessMode ? 'Next Question' : 'Continue'}
             </button>
           </div>
         </div>

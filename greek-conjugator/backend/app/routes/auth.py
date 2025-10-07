@@ -54,7 +54,6 @@ def login():
         if user and user.check_password(password):
             session['user_id'] = user.id
             session['username'] = user.username
-            session['subscription_tier'] = user.subscription_tier
 
             user.last_login = datetime.utcnow()
             db.session.commit()
@@ -64,8 +63,7 @@ def login():
                 'user': {
                     'id': user.id,
                     'username': user.username,
-                    'email': user.email,
-                    'subscription_tier': user.subscription_tier
+                    'email': user.email
                 }
             })
 
@@ -89,8 +87,7 @@ def check_auth():
                 'user': {
                     'id': user.id,
                     'username': user.username,
-                    'email': user.email,
-                    'subscription_tier': user.subscription_tier
+                    'email': user.email
                 }
             })
     return jsonify({'authenticated': False})
