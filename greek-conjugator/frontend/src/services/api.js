@@ -136,6 +136,19 @@ export const verbsService = {
     } catch (error) {
       throw new Error(error.response?.data?.error || 'Failed to fetch statistics');
     }
+  },
+
+  async generatePracticeQuestion(sessionId, verbId, questionType = 'conjugation') {
+    try {
+      const response = await api.post('/verbs/practice/question', {
+        session_id: sessionId,
+        verb_id: verbId,
+        question_type: questionType
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to generate practice question');
+    }
   }
 };
 

@@ -16,6 +16,10 @@ const PracticeSession = ({ user, onBackToHome }) => {
   const [showHints, setShowHints] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isEndlessMode, setIsEndlessMode] = useState(true); // Default to endless mode
+  // New smart practice features
+  const [practiceMode, setPracticeMode] = useState('conjugation'); // 'conjugation', 'multiple_choice', 'smart'
+  const [smartQuestion, setSmartQuestion] = useState(null);
+  const [selectedMultipleChoice, setSelectedMultipleChoice] = useState(null);
   const [practiceStats, setPracticeStats] = useState({
     totalQuestions: 0,
     correctAnswers: 0,
@@ -154,6 +158,8 @@ const PracticeSession = ({ user, onBackToHome }) => {
     setUserAnswer('');
     setValidationResult(null);
     setCurrentQuestion(null); // Clear current question to force generation of new one
+    setSmartQuestion(null); // Clear smart question
+    setSelectedMultipleChoice(null); // Clear multiple choice selection
 
     if (isEndlessMode) {
       // In endless mode, just move to the next verb or cycle back
@@ -186,6 +192,93 @@ const PracticeSession = ({ user, onBackToHome }) => {
     }
   };
 
+  // Generate smart practice question
+  const generateSmartQuestion = async () => {
+    if (!sessionData || !sessionData.verbs[currentQuestionIndex]) return null;
+
+    const verb = sessionData.verbs[currentQuestionIndex];
+    
+    try {
+      const questionType = practiceMode === 'smart' ? 
+        (Math.random() > 0.5 ? 'multiple_choice' : 'conjugation') : 
+        practiceMode;
+        
+      const response = await verbsService.generatePracticeQuestion(
+        sessionData.session_id,
+        verb.id,
+        questionType
+      );
+      
+      setSmartQuestion(response);
+      setSelectedMultipleChoice(null);
+      return response;
+    } catch (error) {
+      console.error('Failed to generate smart question:', error);
+      // Fallback to regular question
+      return getCurrentQuestion();
+    }
+  };
+
+  // Handle multiple choice selection
+  const handleMultipleChoiceSelect = (option) => {
+    setSelectedMultipleChoice(option);
+    setUserAnswer(option);
+  };
+
+  // Submit smart practice answer
+  const submitSmartAnswer = async () => {
+    if (!smartQuestion) return;
+
+    setLoading(true);
+    try {
+      const userInput = practiceMode === 'multiple_choice' || smartQuestion.type === 'multiple_choice' 
+        ? selectedMultipleChoice 
+        : userAnswer;
+        
+      if (!userInput) {
+        setLoading(false);
+        return;
+      }
+
+      const correct = userInput === smartQuestion.correct_answer;
+      setIsCorrect(correct);
+      setShowResult(true);
+
+      // Update score and stats
+      const newScore = {
+        correct: score.correct + (correct ? 1 : 0),
+        total: score.total + 1
+      };
+      setScore(newScore);
+
+      const newTotalQuestions = practiceStats.totalQuestions + 1;
+      const newCorrectAnswers = practiceStats.correctAnswers + (correct ? 1 : 0);
+      const newStreak = correct ? practiceStats.streak + 1 : 0;
+      const newMaxStreak = Math.max(practiceStats.maxStreak, newStreak);
+
+      setPracticeStats({
+        totalQuestions: newTotalQuestions,
+        correctAnswers: newCorrectAnswers,
+        accuracy: Math.round((newCorrectAnswers / newTotalQuestions) * 100),
+        streak: newStreak,
+        maxStreak: newMaxStreak
+      });
+
+      // Submit to backend
+      await verbsService.submitAnswer(
+        sessionData.session_id,
+        smartQuestion.conjugation.id,
+        userInput,
+        correct
+      );
+    } catch (error) {
+      console.error('Failed to submit smart answer:', error);
+      setShowResult(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Toggle between endless and fixed session modes
   const toggleMode = () => {
     setIsEndlessMode(!isEndlessMode);
@@ -200,6 +293,22 @@ const PracticeSession = ({ user, onBackToHome }) => {
       startSession(); // Start session automatically when component loads
     }
   }, [user, sessionData]);
+
+  // Generate smart question when practice mode changes or new question is needed
+  useEffect(() => {
+    const loadSmartQuestion = async () => {
+      if (!sessionData || (practiceMode !== 'smart' && practiceMode !== 'multiple_choice')) return;
+      if (showResult) return; // Don't generate new question if showing result
+
+      try {
+        await generateSmartQuestion();
+      } catch (error) {
+        console.error('Failed to load smart question:', error);
+      }
+    };
+
+    loadSmartQuestion();
+  }, [sessionData, practiceMode, currentQuestionIndex]);
 
   const question = getCurrentQuestion();
 
@@ -278,7 +387,7 @@ const PracticeSession = ({ user, onBackToHome }) => {
           {onBackToHome && (
             <button
               onClick={onBackToHome}
-              className="bg-gray-50 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
+              className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
             >
               ← Home
             </button>
@@ -287,12 +396,51 @@ const PracticeSession = ({ user, onBackToHome }) => {
             {isEndlessMode ? 'Endless Practice' : 'Practice Session'}
           </h1>
         </div>
-        <button
-          onClick={toggleMode}
-          className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors text-sm"
-        >
-          {isEndlessMode ? 'Switch to Session Mode' : 'Switch to Endless Mode'}
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={toggleMode}
+            className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors text-sm"
+          >
+            {isEndlessMode ? 'Session Mode' : 'Endless Mode'}
+          </button>
+        </div>
+      </div>
+
+      {/* Practice Mode Selector */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <h3 className="font-semibold text-gray-800 mb-3">🎯 Practice Mode</h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setPracticeMode('conjugation')}
+            className={`py-2 px-4 rounded transition-colors text-sm ${
+              practiceMode === 'conjugation'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-blue-50'
+            }`}
+          >
+            ✍️ Type Answer
+          </button>
+          <button
+            onClick={() => setPracticeMode('multiple_choice')}
+            className={`py-2 px-4 rounded transition-colors text-sm ${
+              practiceMode === 'multiple_choice'
+                ? 'bg-green-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-green-50'
+            }`}
+          >
+            📝 Multiple Choice
+          </button>
+          <button
+            onClick={() => setPracticeMode('smart')}
+            className={`py-2 px-4 rounded transition-colors text-sm ${
+              practiceMode === 'smart'
+                ? 'bg-purple-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-purple-50'
+            }`}
+          >
+            🧠 Smart Mix
+          </button>
+        </div>
       </div>
 
       {/* Real-time practice statistics */}
@@ -341,66 +489,128 @@ const PracticeSession = ({ user, onBackToHome }) => {
 
       {/* Question */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          Conjugate the Verb
-        </h2>
-        <div className="bg-blue-50 p-4 rounded-lg mb-4">
-          <p className="text-lg text-gray-700">
-            {question.prompt}
-          </p>
-        </div>
+        {smartQuestion && (practiceMode === 'smart' || practiceMode === 'multiple_choice') ? (
+          // Smart Practice Question
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              {smartQuestion.type === 'multiple_choice' ? '📝 Multiple Choice' : '✍️ Conjugate the Verb'}
+            </h2>
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <p className="text-lg text-gray-700">
+                {smartQuestion.question}
+              </p>
+            </div>
 
-        <div className="text-center mb-4">
-          <span className="text-3xl font-bold text-blue-600" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-            {question.verb.infinitive}
-          </span>
-          <p className="text-gray-600 mt-1">{question.verb.english}</p>
-        </div>
+            <div className="text-center mb-4">
+              <span className="text-3xl font-bold text-blue-600" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                {smartQuestion.verb.infinitive}
+              </span>
+              <p className="text-gray-600 mt-1">"{smartQuestion.translation}"</p>
+              {smartQuestion.hint && (
+                <p className="text-sm text-gray-500 mt-2 italic">{smartQuestion.hint}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          // Regular Practice Question
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Conjugate the Verb
+            </h2>
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <p className="text-lg text-gray-700">
+                {question.prompt}
+              </p>
+            </div>
+
+            <div className="text-center mb-4">
+              <span className="text-3xl font-bold text-blue-600" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                {question.verb.infinitive}
+              </span>
+              <p className="text-gray-600 mt-1">{question.verb.english}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Answer input */}
       {!showResult ? (
         <div className="mb-6">
-          <GreekKeyboard
-            value={userAnswer}
-            onTextChange={setUserAnswer}
-            placeholder="Type your answer..."
-            showValidation={true}
-            correctAnswer={question.conjugation.form}
-            autoTransliterate={true}
-          />
+          {smartQuestion && smartQuestion.type === 'multiple_choice' ? (
+            // Multiple Choice Options
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Choose the correct answer:</h3>
+              {smartQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleMultipleChoiceSelect(option)}
+                  className={`w-full p-4 text-left rounded-lg border-2 transition-colors ${
+                    selectedMultipleChoice === option
+                      ? 'border-blue-500 bg-blue-50 text-blue-800'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                >
+                  <span className="text-lg">{option}</span>
+                </button>
+              ))}
+              
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  onClick={submitSmartAnswer}
+                  disabled={!selectedMultipleChoice || loading}
+                  className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                  Submit Answer
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Text Input (Regular and Smart Conjugation)
+            <div>
+              <GreekKeyboard
+                value={userAnswer}
+                onTextChange={setUserAnswer}
+                placeholder="Type your answer..."
+                showValidation={true}
+                correctAnswer={smartQuestion ? smartQuestion.correct_answer : question.conjugation.form}
+                autoTransliterate={true}
+              />
 
-          <div className="flex justify-center gap-4 mt-4">
-            <button
-              onClick={submitAnswer}
-              disabled={!userAnswer.trim() || loading}
-              className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-              {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
-              Submit Answer
-            </button>
+              <div className="flex justify-center gap-4 mt-4">
+                <button
+                  onClick={smartQuestion ? submitSmartAnswer : submitAnswer}
+                  disabled={!userAnswer.trim() || loading}
+                  className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                  Submit Answer
+                </button>
 
-            <button
-              onClick={() => setShowHints(!showHints)}
-              className="bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors"
-            >
-              {showHints ? 'Hide Hints' : 'Show Hints'}
-            </button>
-          </div>
+                <button
+                  onClick={() => setShowHints(!showHints)}
+                  className="bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  {showHints ? 'Hide Hints' : 'Show Hints'}
+                </button>
+              </div>
 
-          {/* Enhanced hints section */}
-          {showHints && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2">💡 Hints:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• <strong>Tense:</strong> {question.conjugation.tense}</li>
-                <li>• <strong>Mood:</strong> {question.conjugation.mood}</li>
-                <li>• <strong>Voice:</strong> {question.conjugation.voice}</li>
-                <li>• <strong>Person:</strong> {question.conjugation.person}</li>
-                <li>• <strong>Number:</strong> {question.conjugation.number}</li>
-                <li>• You can type Latin characters (e.g., "grapho" → "γραφω")</li>
-                <li>• Accents are optional for matching - focus on the base letters first</li>
-              </ul>
+              {/* Enhanced hints section */}
+              {showHints && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">💡 Hints:</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• <strong>Tense:</strong> {smartQuestion ? smartQuestion.conjugation.tense : question.conjugation.tense}</li>
+                    <li>• <strong>Mood:</strong> {smartQuestion ? smartQuestion.conjugation.mood : question.conjugation.mood}</li>
+                    <li>• <strong>Voice:</strong> {smartQuestion ? smartQuestion.conjugation.voice : question.conjugation.voice}</li>
+                    <li>• <strong>Person:</strong> {smartQuestion ? smartQuestion.conjugation.person : question.conjugation.person}</li>
+                    <li>• <strong>Number:</strong> {smartQuestion ? smartQuestion.conjugation.number : question.conjugation.number}</li>
+                    <li>• You can type Latin characters (e.g., "grapho" → "γραφω")</li>
+                    <li>• Accents are optional for matching - focus on the base letters first</li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>

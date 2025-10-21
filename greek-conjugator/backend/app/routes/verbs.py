@@ -296,3 +296,78 @@ def get_user_stats():
         })
     except Exception as e:
         return jsonify({'error': 'Failed to fetch statistics'}), 500
+
+@bp.route('/practice/question', methods=['POST'])
+@login_required
+def generate_practice_question():
+    """Generate enhanced practice questions with translations and multiple choice options"""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        verb_id = data.get('verb_id')
+        question_type = data.get('question_type', 'conjugation')  # 'conjugation', 'multiple_choice'
+        
+        user_id = session['user_id']
+        
+        # Get the verb and its conjugations
+        verb = Verb.query.get_or_404(verb_id)
+        conjugations = Conjugation.query.filter_by(verb_id=verb_id).all()
+        
+        if not conjugations:
+            return jsonify({'error': 'No conjugations found for this verb'}), 404
+        
+        # Select a random conjugation for the question
+        target_conjugation = random.choice(conjugations)
+        
+        # Generate question based on type
+        if question_type == 'multiple_choice':
+            # Generate multiple choice options
+            correct_answer = target_conjugation.form
+            
+            # Get wrong answers from other conjugations of the same verb and other verbs
+            all_forms = [c.form for c in conjugations if c.form != correct_answer]
+            
+            # Add some forms from other verbs for more variety
+            other_conjugations = Conjugation.query.filter(
+                Conjugation.verb_id != verb_id,
+                Conjugation.tense == target_conjugation.tense,
+                Conjugation.mood == target_conjugation.mood,
+                Conjugation.person == target_conjugation.person,
+                Conjugation.number == target_conjugation.number
+            ).limit(10).all()
+            
+            all_forms.extend([c.form for c in other_conjugations])
+            
+            # Select 3 random wrong answers
+            wrong_answers = random.sample(all_forms, min(3, len(all_forms)))
+            
+            # Create options list and shuffle
+            options = [correct_answer] + wrong_answers
+            random.shuffle(options)
+            
+            question_data = {
+                'type': 'multiple_choice',
+                'verb': verb.to_dict(),
+                'conjugation': target_conjugation.to_dict(),
+                'question': f"How do you conjugate '{verb.infinitive}' ({verb.english}) in {target_conjugation.tense} tense, {target_conjugation.mood} mood, {target_conjugation.person} person {target_conjugation.number}?",
+                'options': options,
+                'correct_answer': correct_answer,
+                'translation': verb.english
+            }
+        else:
+            # Standard conjugation question
+            question_data = {
+                'type': 'conjugation',
+                'verb': verb.to_dict(),
+                'conjugation': target_conjugation.to_dict(),
+                'question': f"Conjugate '{verb.infinitive}' ({verb.english}) in {target_conjugation.tense} tense, {target_conjugation.mood} mood, {target_conjugation.person} person {target_conjugation.number}",
+                'correct_answer': target_conjugation.form,
+                'translation': verb.english,
+                'hint': f"The verb means '{verb.english}'"
+            }
+        
+        return jsonify(question_data)
+        
+    except Exception as e:
+        print(f"Error generating practice question: {str(e)}")
+        return jsonify({'error': 'Failed to generate question'}), 500
