@@ -35,11 +35,11 @@ class GreekTextProcessor:
         # Consonants
         'b': 'β', 'g': 'γ', 'd': 'δ', 'z': 'ζ', 'th': 'θ', 'k': 'κ', 'l': 'λ',
         'm': 'μ', 'n': 'ν', 'x': 'ξ', 'p': 'π', 'r': 'ρ', 's': 'σ', 't': 'τ',
-        'f': 'φ', 'ch': 'χ', 'ps': 'ψ', 'w': 'ω',
+        'f': 'φ', 'ph': 'φ', 'ch': 'χ', 'ps': 'ψ', 'w': 'ω',
         
         'B': 'Β', 'G': 'Γ', 'D': 'Δ', 'Z': 'Ζ', 'Th': 'Θ', 'K': 'Κ', 'L': 'Λ',
         'M': 'Μ', 'N': 'Ν', 'X': 'Ξ', 'P': 'Π', 'R': 'Ρ', 'S': 'Σ', 'T': 'Τ',
-        'F': 'Φ', 'Ch': 'Χ', 'Ps': 'Ψ', 'W': 'Ω',
+        'F': 'Φ', 'Ph': 'Φ', 'PH': 'Φ', 'Ch': 'Χ', 'Ps': 'Ψ', 'W': 'Ω',
         
         # Special cases
         'h': 'η', 'H': 'Η',  # eta
@@ -48,6 +48,10 @@ class GreekTextProcessor:
         'j': 'ι', 'J': 'Ι',  # iota alternative
         'v': 'β', 'V': 'Β',  # beta alternative
         'q': 'κ', 'Q': 'Κ',  # kappa alternative
+
+        # Common Greek-derived prefixes
+        'anthro': 'ανθρω',
+        'Anthro': 'Ανθρω',
     }
     
     # Reverse mapping for Greek to Latin
@@ -62,6 +66,15 @@ class GreekTextProcessor:
         'Ο': 'O', 'Π': 'P', 'Ρ': 'R', 'Σ': 'S', 'Τ': 'T', 'Υ': 'U', 'Φ': 'F',
         'Χ': 'Ch', 'Ψ': 'Ps', 'Ω': 'W'
     }
+
+    # Precompiled patterns for faster transliteration
+    _LATIN_SEQUENCES = sorted(TRANSLITERATION_MAP.keys(), key=len, reverse=True)
+    _GREEK_SEQUENCES = sorted(REVERSE_TRANSLITERATION.keys(), key=len, reverse=True)
+    _LATIN_TO_GREEK_PATTERN = re.compile("|".join(re.escape(seq) for seq in _LATIN_SEQUENCES))
+    _GREEK_TO_LATIN_PATTERN = re.compile("|".join(re.escape(seq) for seq in _GREEK_SEQUENCES))
+    _FINAL_SIGMA_PATTERN = re.compile(r'σ(?=$|\s|[.,;:!?])')
+    _FINAL_OMEGA_PATTERN = re.compile(r'ο(?=$|\s|[.,;:!?])')
+    _FINAL_CAPITAL_OMEGA_PATTERN = re.compile(r'Ο(?=$|\s|[.,;:!?])')
     
     # Common Greek diacritical marks
     DIACRITICS = {
@@ -120,6 +133,21 @@ class GreekTextProcessor:
         return text.replace('ς', 'σ')
     
     @classmethod
+    def _apply_final_sigma_form(cls, text: str) -> str:
+        """Convert word-final sigma to ς for display/transliteration output."""
+        if not text:
+            return ""
+        return cls._FINAL_SIGMA_PATTERN.sub('ς', text)
+
+    @classmethod
+    def _apply_final_omega_form(cls, text: str) -> str:
+        """Convert terminal omicron to omega to better match common verb endings."""
+        if not text:
+            return ""
+        text = cls._FINAL_OMEGA_PATTERN.sub('ω', text)
+        return cls._FINAL_CAPITAL_OMEGA_PATTERN.sub('Ω', text)
+    
+    @classmethod
     def compare_accent_insensitive(cls, text1: str, text2: str) -> bool:
         """
         Compare two Greek texts ignoring accents and case.
@@ -148,15 +176,14 @@ class GreekTextProcessor:
         """
         if not latin_text:
             return ""
-        
-        result = latin_text
-        
-        # Sort by length (descending) to handle longer sequences first
-        sorted_mappings = sorted(cls.TRANSLITERATION_MAP.items(), key=lambda x: len(x[0]), reverse=True)
-        
-        for latin, greek in sorted_mappings:
-            result = result.replace(latin, greek)
-        
+
+        def _replace(match: re.Match) -> str:
+            token = match.group(0)
+            return cls.TRANSLITERATION_MAP.get(token, token)
+
+        result = cls._LATIN_TO_GREEK_PATTERN.sub(_replace, latin_text)
+        result = cls._apply_final_omega_form(result)
+        result = cls._apply_final_sigma_form(result)
         return result
     
     @classmethod
@@ -169,15 +196,12 @@ class GreekTextProcessor:
         
         # Remove accents first for cleaner transliteration
         clean_greek = cls.remove_accents(greek_text)
-        result = clean_greek
-        
-        # Sort by length (descending) to handle longer sequences first
-        sorted_mappings = sorted(cls.REVERSE_TRANSLITERATION.items(), key=lambda x: len(x[0]), reverse=True)
-        
-        for greek, latin in sorted_mappings:
-            result = result.replace(greek, latin)
-        
-        return result
+
+        def _replace(match: re.Match) -> str:
+            token = match.group(0)
+            return cls.REVERSE_TRANSLITERATION.get(token, token)
+
+        return cls._GREEK_TO_LATIN_PATTERN.sub(_replace, clean_greek)
     
     @classmethod
     def is_greek_text(cls, text: str) -> bool:

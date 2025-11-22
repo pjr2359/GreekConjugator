@@ -135,7 +135,6 @@ backend/
 ├── requirements.txt      # Python dependencies
 ├── run_backend.py        # Development server
 ├── seed_db.py           # Database seeding
-├── simple_test.py       # Basic Greek text processing test
 └── test_greek_processing.py  # Comprehensive tests
 ```
 
@@ -194,7 +193,7 @@ const result = await textValidationService.checkAnswer(userInput, correctAnswer)
 ```
 
 ### Testing
-- Run `python3 simple_test.py` to test core functionality
+- Run `python3 test_greek_processing.py` to verify Greek text utilities
 - Enhanced practice sessions with real-time validation
 - Fallback to client-side processing if API fails
 

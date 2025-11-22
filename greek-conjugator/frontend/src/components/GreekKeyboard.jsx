@@ -406,7 +406,4 @@ const clientSideCompare = (userInput, correctAnswer) => {
   return normalizedInput === normalizedCorrect;
 };
 
-// Export the comparison function for backwards compatibility
-export const acceptVariations = clientSideCompare;
-
 export default GreekKeyboard;

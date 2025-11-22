@@ -41,59 +41,24 @@ pip install -r requirements.txt
 python run_backend.py
 ```
 
-### Option 3: Use the Simple Server (No Flask Required)
-I've created a simple HTTP server that doesn't require Flask:
+## ✅ Verify Your Setup
+
+After installing dependencies choose one of the following quick checks:
 
 ```bash
-cd /home/pjrei/greek-conjugator/greek-conjugator/backend
-python3 simple_server.py
+# Smoke-test the Flask API
+python3 run_backend.py
+
+# In a separate terminal, run the focused text processing test suite
+python3 test_greek_processing.py
 ```
 
-This server provides:
-- ✅ User registration and login
-- ✅ Session management
-- ✅ SQLite database
-- ✅ CORS support for React frontend
-- ✅ Same API endpoints as Flask version
-
-## 🎯 What Each Option Provides
-
-### Flask Server (Option 1 & 2)
-- ✅ Full Greek text processing API
-- ✅ Verb practice sessions
-- ✅ Spaced repetition
-- ✅ Complete feature set
-
-### Simple Server (Option 3)
-- ✅ User authentication (login/register)
-- ✅ Basic session management
-- ❌ No verb practice features yet
-- ❌ No Greek text processing API
-
-## 🚀 Quick Start with Simple Server
-
-1. **Start the server:**
-```bash
-cd /home/pjrei/greek-conjugator/greek-conjugator/backend
-python3 simple_server.py
-```
-
-2. **Start the frontend:**
-```bash
-cd /home/pjrei/greek-conjugator/greek-conjugator/frontend
-npm start
-```
-
-3. **Test authentication:**
-- Go to http://localhost:3000
-- Try registering a new account
-- Try logging in
+Both commands must be executed from `/home/pjrei/greek-conjugator/greek-conjugator/backend`.
 
 ## 📝 Next Steps
 
-If the simple server works for authentication, I can extend it to include:
-1. Verb practice endpoints
-2. Greek text processing
-3. Spaced repetition functionality
-
-The simple server uses only Python standard library, so it should work without any package installation!
+- Seed the development database if you need sample data:
+  ```bash
+  python3 seed_db.py
+  ```
+- Run the frontend from `frontend/` with `npm start` and sign in through the React app.
