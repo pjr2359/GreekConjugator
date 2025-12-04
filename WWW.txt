@@ -1,0 +1,14 @@
+-test and find out what we have now. Thoroughly. 
+
+-top 1000 words
+-sentence practice
+-AUDIO AUDIO AUDIO (AI maybe... think about youtube or public api's... easy greek)
+-flashcards with spaced repetition
+-conjugation practice (look at conjugemos)
+-grammar help (ai? public info)
+-all words should provide context sentence
+-bundles based on need... travel, food, restaurant, places, etc.
+-comprehensive progress tracking and level indicator for users. 
+-Speaking would be awesome too... maybe look into AI as final improvement
+-NEED SOME SORT OF LESSON STRUCTURE!!!
+-FUN! real world content critical
