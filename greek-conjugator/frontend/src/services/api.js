@@ -242,6 +242,56 @@ export const vocabularyService = {
   }
 };
 
+// Skills/Progress service
+export const skillsService = {
+  async getSkillTree() {
+    try {
+      const response = await api.get('/skills/tree');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch skill tree');
+    }
+  },
+
+  async getSkillDetail(category) {
+    try {
+      const response = await api.get(`/skills/category/${category}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch skill detail');
+    }
+  },
+
+  async recordPractice(category, correct) {
+    try {
+      const response = await api.post('/skills/record', { category, correct });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to record practice');
+    }
+  },
+
+  async getStats() {
+    try {
+      const response = await api.get('/skills/stats');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch stats');
+    }
+  },
+
+  async getProgress() {
+    try {
+      const response = await api.get('/skills/progress');
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch progress:', error);
+      // Return default values if API fails
+      return { data: { total_attempts: 0, total_correct: 0, overall_accuracy: 0, skills_mastered: 0, current_streak: 0 } };
+    }
+  }
+};
+
 // Text validation service
 export const textValidationService = {
   async validate(text) {

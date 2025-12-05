@@ -1,31 +1,61 @@
 Greek Conjugator App - TODO
 ==========================
 
-Current State (Updated July 2025):
----------------------------------
+Current State (Updated December 2025):
+-------------------------------------
 ✅ **COMPLETED:**
 - User authentication (register/login/logout) is working
 - Smart practice for verbs is functional (session auto-starts, question selection is stable)
 - Session ends after 5 questions or when no more verbs with conjugations are available
 - Progress dashboard and stats are displayed
 - Greek text normalization and answer validation are implemented
-- **MASSIVE VERB DATABASE**: 612 verbs with 4,884 conjugations imported successfully
+- **MASSIVE VERB DATABASE**: 612 verbs with 5,466 conjugations imported successfully
 - **Comprehensive testing suite** created and validated
-- **Data integrity verified**: 98.4% verb import rate, 82.4% conjugation import rate
+- **Data integrity verified**: 98.4% verb import rate, 92.7% conjugation import rate
 - **Database quality excellent**: 0 empty forms, 0 orphaned records, 0 duplicates
 - **MORPHOLOGICAL DICTIONARY DISCOVERED**: 902,033 words from Greek Wiktionary with complete conjugation data
 - **🎉 MORPHOLOGICAL DICTIONARY INTEGRATION COMPLETED**: Successfully imported 2,462 new conjugations from Wiktionary!
 
-Current Database Statistics (After Morphological Dictionary Integration):
-----------------------------------------------------------------------
+✅ **NEW FEATURES (December 2025):**
+- **🎨 Beautiful Dark Theme UI**: Complete redesign with slate/blue gradients across all screens
+- **📚 Vocabulary Practice System**: 2,500+ words with Anki-style spaced repetition
+- **🎯 Daily New Word Limits**: Configurable daily learning goals (default 10 new words/day)
+- **🔄 Three Answer Modes**: Multiple Choice, Type Answer, and Flashcard (self-grading)
+- **💡 Grammar Tooltips**: Hover over tense/mood/voice terms for Greek translations and examples
+- **🗺️ SKILL PROGRESSION SYSTEM**: 
+  - 11 conjugation skill categories organized in 5 tiers
+  - Visual Progress Map (Duolingo-style skill tree)
+  - Mastery levels: Beginner → Developing → Proficient → Expert → Master
+  - Unlock system: Master one skill to unlock the next
+  - Per-skill tracking: attempts, accuracy, mastery level
+- **📊 Comprehensive Stats**: Track progress across vocabulary and conjugations
+- **🏛️ Greek-themed Design**: Temple icons, Greek text headers, cultural aesthetic
+
+Current Database Statistics (December 2025):
+-------------------------------------------
 - **612 total verbs** in database
-- **7,346 total conjugations** across all verbs (+50% increase!)
-- **98 verbs with complete conjugations** (+23% increase from 80)
-- **Tense coverage**: Present (4,500+), Imperfect (1,500+), Future (800+), Aorist (500+), Imperative (400+)
-- **Mood coverage**: Indicative (6,000+), Imperative (400+), Subjunctive (900+)
-- **Voice coverage**: Active (4,000+), Passive (3,300+)
-- **Verb groups**: B-group (534), A-group (74), Irregular (4)
-- **Data source**: Original database + Wiktionary morphological dictionary (high-quality, accurate conjugations)
+- **5,466 total conjugations** across all verbs
+- **87 verbs with conjugations** ready for practice
+- **Tense coverage**: Present (3,100+), Imperfect (1,200+), Future (500+), Perfect (85+)
+- **Mood coverage**: Indicative (4,500+), Imperative (500+), Subjunctive (220+)
+- **Voice coverage**: Active (2,800+), Passive (2,600+)
+- **Data source**: Original database + Wiktionary morphological dictionary
+
+**Skill Progression System:**
+- **11 skill categories** organized in 5 tiers:
+  - Tier 1 (Beginner): Present Indicative Active (1,607 forms)
+  - Tier 2 (Elementary): Present Passive (1,514), Imperative Active (289)
+  - Tier 3 (Intermediate): Imperfect Active (586), Imperfect Passive (651)
+  - Tier 4 (Advanced): Future Active (179), Future Passive (118), Future Subjunctive (174)
+  - Tier 5 (Expert): Perfect Active (18), Perfect Passive (67), Imperative Passive (217)
+- **Mastery system**: 5 levels per skill (Beginner → Master)
+- **Unlock progression**: Reach Proficient (level 3) to unlock next skills
+
+**Vocabulary System:**
+- **2,500+ common Greek words** from frequency list
+- **Spaced repetition (SM-2 algorithm)** for efficient learning
+- **Progressive unlocking**: Master words to unlock more
+- **Multiple practice modes**: Multiple choice, type answer, flashcard
 
 Morphological Dictionary Integration Results:
 --------------------------------------------

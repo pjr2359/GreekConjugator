@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GreekKeyboard, { compareGreekTexts } from './GreekKeyboard';
-import { verbsService, textValidationService } from '../services/api';
+import { verbsService, textValidationService, skillsService } from '../services/api';
 
 // Grammar term definitions for tooltips (lowercase keys to match database values)
 const grammarTerms = {
@@ -51,19 +51,41 @@ const GrammarTerm = ({ term }) => {
   );
 };
 
+// Infer person from Greek verb ending
+const inferPersonFromEnding = (form) => {
+  if (!form) return null;
+  const ending = form.slice(-2);
+  // Active voice endings (present indicative)
+  if (form.endsWith('ω') || form.endsWith('ομαι')) return '1st';
+  if (form.endsWith('εις') || form.endsWith('εσαι') || form.endsWith('ες')) return '2nd';
+  if (form.endsWith('ει') || form.endsWith('εται') || form.endsWith('ε')) return '3rd';
+  if (form.endsWith('ουμε') || form.endsWith('όμαστε') || form.endsWith('αμε')) return '1st pl';
+  if (form.endsWith('ετε') || form.endsWith('εστε') || form.endsWith('ατε')) return '2nd pl';
+  if (form.endsWith('ουν') || form.endsWith('ονται') || form.endsWith('αν')) return '3rd pl';
+  return null;
+};
+
 // Parse and render conjugation prompt with tooltips
-const ConjugationPrompt = ({ tense, mood, voice, number }) => {
+const ConjugationPrompt = ({ tense, mood, voice, number, form }) => {
+  const person = inferPersonFromEnding(form);
+  
   return (
     <span className="text-white/90 flex flex-wrap justify-center gap-2">
       {tense && <GrammarTerm term={tense} />}
       {mood && <><span className="text-white/50">•</span><GrammarTerm term={mood} /></>}
       {voice && <><span className="text-white/50">•</span><GrammarTerm term={voice} /></>}
+      {person && <><span className="text-white/50">•</span><span className="font-medium text-amber-300">{person} person</span></>}
       {number && <><span className="text-white/50">•</span><GrammarTerm term={number} /></>}
     </span>
   );
 };
 
-const PracticeSession = ({ user, onBackToHome }) => {
+const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
+  // Extract skill category settings if practicing a specific skill
+  const skillCategory = settings?.skillCategory;
+  const skillTense = settings?.tense;
+  const skillMood = settings?.mood;
+  const skillVoice = settings?.voice;
   const [sessionData, setSessionData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -83,6 +105,14 @@ const PracticeSession = ({ user, onBackToHome }) => {
   const [smartQuestion, setSmartQuestion] = useState(null);
   const [selectedMultipleChoice, setSelectedMultipleChoice] = useState(null);
   const [flashcardRevealed, setFlashcardRevealed] = useState(false);
+  
+  // Gamification state
+  const [skillStats, setSkillStats] = useState(null);
+  const [xpGained, setXpGained] = useState(0);
+  const [showXpAnimation, setShowXpAnimation] = useState(false);
+  const [levelUp, setLevelUp] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  
   const [practiceStats, setPracticeStats] = useState({
     totalQuestions: 0,
     correctAnswers: 0,
@@ -306,6 +336,14 @@ const PracticeSession = ({ user, onBackToHome }) => {
       const correct = userInput === smartQuestion.correct_answer;
       setIsCorrect(correct);
       setShowResult(true);
+      
+      // XP animation for correct answer
+      if (correct) {
+        const bonusXp = practiceStats.streak >= 5 ? 5 : 0; // Streak bonus
+        setXpGained(10 + bonusXp);
+        setShowXpAnimation(true);
+        setTimeout(() => setShowXpAnimation(false), 1500);
+      }
 
       // Update score and stats
       const newScore = {
@@ -351,6 +389,19 @@ const PracticeSession = ({ user, onBackToHome }) => {
   };
 
   // Don't auto-start - wait for user to click Start Practice
+  
+  // Load skill stats on mount
+  useEffect(() => {
+    const loadSkillStats = async () => {
+      try {
+        const response = await skillsService.getProgress();
+        setSkillStats(response.data);
+      } catch (error) {
+        console.error('Failed to load skill stats:', error);
+      }
+    };
+    loadSkillStats();
+  }, []);
 
   // Generate smart question when practice mode changes or new question is needed
   useEffect(() => {
@@ -382,32 +433,103 @@ const PracticeSession = ({ user, onBackToHome }) => {
     );
   }
 
+  // Format skill category for display
+  const formatSkillName = (category) => {
+    if (!category) return null;
+    const parts = category.split('_');
+    return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+  };
+
+  // Calculate overall level from skill stats
+  const calculateOverallLevel = () => {
+    if (!skillStats) return { level: 1, xp: 0, xpToNext: 100, totalXp: 0 };
+    const totalAttempts = skillStats.total_attempts || 0;
+    const totalCorrect = skillStats.total_correct || 0;
+    const xpPerCorrect = 10;
+    const xpPerAttempt = 2;
+    const totalXp = (totalCorrect * xpPerCorrect) + (totalAttempts * xpPerAttempt);
+    const level = Math.floor(totalXp / 100) + 1;
+    const xpInCurrentLevel = totalXp % 100;
+    return { level, xp: xpInCurrentLevel, xpToNext: 100, totalXp };
+  };
+  
+  const overallLevel = calculateOverallLevel();
+  
+  // Get mastery level name
+  const getMasteryName = (level) => {
+    const names = ['Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Expert'];
+    return names[Math.min(level, 4)];
+  };
+
   // Show start screen when no session data
   if (!sessionData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 flex items-center justify-center">
         <div className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-center">
+          {/* Header with Level Badge */}
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-center relative">
+            {/* Level Badge */}
+            <div className="absolute top-3 right-3 bg-yellow-500 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+              <span>⭐</span> Lvl {overallLevel.level}
+            </div>
             <div className="text-5xl mb-2">📝</div>
-            <h2 className="text-2xl font-bold text-white">Κλίση Ρημάτων</h2>
-            <p className="text-purple-100">Conjugation Practice</p>
+            <h2 className="text-2xl font-bold text-white">
+              {skillCategory ? formatSkillName(skillCategory) : 'Κλίση Ρημάτων'}
+            </h2>
+            <p className="text-purple-100">
+              {skillCategory ? 'Skill Practice' : 'Conjugation Practice'}
+            </p>
           </div>
           
           <div className="p-6">
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            {/* XP Progress Bar */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-slate-400 text-sm">Level Progress</span>
+                <span className="text-amber-400 text-sm font-medium">{overallLevel.xp} / {overallLevel.xpToNext} XP</span>
+              </div>
+              <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-500"
+                  style={{ width: `${(overallLevel.xp / overallLevel.xpToNext) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-slate-500">Level {overallLevel.level}</span>
+                <span className="text-xs text-slate-500">Level {overallLevel.level + 1}</span>
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-4 gap-2 mb-6">
               <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-white">87</div>
-                <div className="text-xs text-slate-400">Verbs</div>
+                <div className="text-lg font-bold text-purple-400">{skillStats?.skills_mastered || 0}</div>
+                <div className="text-xs text-slate-400">Skills</div>
               </div>
               <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-white">5,400+</div>
-                <div className="text-xs text-slate-400">Forms</div>
+                <div className="text-lg font-bold text-green-400">{skillStats?.total_correct || 0}</div>
+                <div className="text-xs text-slate-400">Correct</div>
               </div>
               <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-white">🧠</div>
-                <div className="text-xs text-slate-400">SRS</div>
+                <div className="text-lg font-bold text-blue-400">{skillStats?.overall_accuracy || 0}%</div>
+                <div className="text-xs text-slate-400">Accuracy</div>
+              </div>
+              <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                <div className="text-lg font-bold text-amber-400">🔥</div>
+                <div className="text-xs text-slate-400">{skillStats?.current_streak || 0} Streak</div>
+              </div>
+            </div>
+            
+            {/* Current Mastery Level */}
+            <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-xl p-4 mb-6 border border-purple-500/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-slate-400 text-xs mb-1">Current Mastery</div>
+                  <div className="text-white font-bold">{getMasteryName(Math.floor(overallLevel.level / 5))}</div>
+                </div>
+                <div className="text-4xl">
+                  {overallLevel.level < 5 ? '🌱' : overallLevel.level < 10 ? '🌿' : overallLevel.level < 20 ? '🌳' : overallLevel.level < 30 ? '👑' : '🏆'}
+                </div>
               </div>
             </div>
             
@@ -543,31 +665,79 @@ const PracticeSession = ({ user, onBackToHome }) => {
     );
   }
 
+  // Calculate session XP
+  const sessionXp = (practiceStats.correctAnswers * 10) + (practiceStats.totalQuestions * 2);
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+      {/* XP Animation Overlay */}
+      {showXpAnimation && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+          <div className="bg-amber-500 text-amber-900 px-4 py-2 rounded-full font-bold text-lg shadow-lg">
+            +{xpGained} XP! 🎉
+          </div>
+        </div>
+      )}
+      
+      {/* Level Up Overlay */}
+      {levelUp && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-r from-amber-500 to-yellow-400 p-8 rounded-2xl text-center animate-pulse">
+            <div className="text-6xl mb-4">🎊</div>
+            <h2 className="text-3xl font-bold text-amber-900 mb-2">LEVEL UP!</h2>
+            <p className="text-amber-800">You reached Level {overallLevel.level + 1}!</p>
+            <button 
+              onClick={() => setLevelUp(false)}
+              className="mt-4 px-6 py-2 bg-amber-900 text-amber-100 rounded-lg"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-2xl mx-auto">
         <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
-          {/* Header */}
-          <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              {onBackToHome && (
-                <button
-                  onClick={onBackToHome}
-                  className="text-slate-400 hover:text-white transition-colors"
-                >
-                  ← Back
-                </button>
-              )}
-              <h1 className="text-lg font-bold text-white">
-                {isEndlessMode ? '∞ Endless' : 'Practice Session'}
-              </h1>
+          {/* Progress Header */}
+          <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 p-3 border-b border-slate-700">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-3">
+                {onBackToHome && (
+                  <button
+                    onClick={onBackToHome}
+                    className="text-slate-400 hover:text-white transition-colors text-sm"
+                  >
+                    ← Exit
+                  </button>
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="bg-yellow-500 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold">
+                    Lvl {overallLevel.level}
+                  </span>
+                  <span className="text-amber-400 text-sm font-medium">+{sessionXp} XP</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Streak */}
+                <div className="flex items-center gap-1">
+                  <span className="text-orange-400">🔥</span>
+                  <span className="text-white font-bold">{practiceStats.streak}</span>
+                </div>
+                {/* Score */}
+                <div className="text-sm text-slate-300">
+                  <span className="text-green-400 font-bold">{practiceStats.correctAnswers}</span>
+                  <span className="text-slate-500"> / </span>
+                  <span>{practiceStats.totalQuestions}</span>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={toggleMode}
-              className="text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              {isEndlessMode ? 'Session Mode' : 'Endless Mode'}
-            </button>
+            {/* Mini XP Progress */}
+            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-300"
+                style={{ width: `${((overallLevel.xp + sessionXp) % 100)}%` }}
+              />
+            </div>
           </div>
 
           <div className="p-6">
@@ -664,6 +834,7 @@ const PracticeSession = ({ user, onBackToHome }) => {
                       mood={smartQuestion.mood || 'indicative'}
                       voice={smartQuestion.voice}
                       number={smartQuestion.number || 'singular'}
+                      form={smartQuestion.correct_answer}
                     />
                     <p className="text-white/50 text-xs mt-2">💡 Hover over underlined terms for definitions</p>
                   </div>
@@ -674,7 +845,9 @@ const PracticeSession = ({ user, onBackToHome }) => {
               ) : (
                 // Regular Practice Question
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
-                  <div className="text-white/80 text-sm mb-2">✍️ Conjugate the Verb</div>
+                  <div className="text-white/80 text-sm mb-2">
+                    {answerMode === 'multiple_choice' ? '📝 Which form matches?' : '✍️ Type the conjugation'}
+                  </div>
                   <div className="text-center mb-4">
                     <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
                       {question.verb.infinitive}
@@ -682,13 +855,15 @@ const PracticeSession = ({ user, onBackToHome }) => {
                     <p className="text-white/70 mt-1">"{question.verb.english}"</p>
                   </div>
                   <div className="text-center text-sm bg-white/10 rounded-lg p-3">
+                    <p className="text-white/80 mb-2">Find the form that is:</p>
                     <ConjugationPrompt 
                       tense={question.conjugation.tense}
                       mood={question.conjugation.mood}
                       voice={question.conjugation.voice}
                       number={question.conjugation.number}
+                      form={question.conjugation.form}
                     />
-                    <p className="text-white/50 text-xs mt-2">💡 Hover over underlined terms for definitions</p>
+                    <p className="text-white/50 text-xs mt-3">💡 Hover over underlined terms for definitions</p>
                   </div>
                 </div>
               )}
@@ -742,6 +917,10 @@ const PracticeSession = ({ user, onBackToHome }) => {
                               setIsCorrect(true);
                               setShowResult(true);
                               setFlashcardRevealed(false);
+                              // XP animation for correct answer
+                              setXpGained(10);
+                              setShowXpAnimation(true);
+                              setTimeout(() => setShowXpAnimation(false), 1500);
                               setPracticeStats(prev => ({
                                 ...prev,
                                 totalQuestions: prev.totalQuestions + 1,
@@ -753,16 +932,35 @@ const PracticeSession = ({ user, onBackToHome }) => {
                             }}
                             className="py-4 bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold rounded-xl hover:bg-emerald-500/30 transition-all"
                           >
-                            ✓ Correct
+                            ✓ Correct (+10 XP)
                           </button>
                         </div>
                       </>
                     )}
                   </div>
                 ) : answerMode === 'multiple_choice' || (smartQuestion && smartQuestion.type === 'multiple_choice') ? (
-                  // Multiple Choice Options
+                  // Multiple Choice Options - generate from same verb's conjugations
                   <div className="space-y-3">
-                    {(smartQuestion?.options || [question.conjugation.form, 'γράφει', 'γράφουν', 'γράφουμε'].sort(() => Math.random() - 0.5)).map((option, index) => (
+                    {(() => {
+                      // Get options from smart question or generate from verb's conjugations
+                      if (smartQuestion?.options) return smartQuestion.options;
+                      
+                      // Generate options from the same verb's conjugations
+                      const verbConjs = conjugations[question.verb.id] || [];
+                      const correctForm = question.conjugation.form;
+                      
+                      // Get other forms from the same verb as wrong options
+                      const otherForms = verbConjs
+                        .map(c => c.form)
+                        .filter(f => f && f !== correctForm && f !== '-')
+                        .filter((v, i, a) => a.indexOf(v) === i); // unique
+                      
+                      // Shuffle and take 3 wrong options
+                      const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
+                      
+                      // Combine with correct answer and shuffle
+                      return [correctForm, ...shuffled].sort(() => Math.random() - 0.5);
+                    })().map((option, index) => (
                       <button
                         key={index}
                         onClick={() => handleMultipleChoiceSelect(option)}
@@ -863,10 +1061,12 @@ const PracticeSession = ({ user, onBackToHome }) => {
         </div>
       )}
 
-            {/* Hints */}
-            <div className="text-sm text-slate-400 bg-slate-700/50 p-4 rounded-xl mt-6">
-              💡 <strong className="text-slate-300">Tip:</strong> Type in Latin characters (e.g., "grapho") for automatic Greek conversion.
-            </div>
+            {/* Hints - only show for typing mode */}
+            {answerMode === 'type' && (
+              <div className="text-sm text-slate-400 bg-slate-700/50 p-4 rounded-xl mt-6">
+                💡 <strong className="text-slate-300">Tip:</strong> Type in Latin characters (e.g., "grapho") for automatic Greek conversion.
+              </div>
+            )}
           </div>
         </div>
       </div>

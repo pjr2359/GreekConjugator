@@ -29,11 +29,12 @@ def create_app():
     db.init_app(app)
 
     # Register blueprints
-    from .routes import auth, verbs, text_validation, vocabulary
+    from .routes import auth, verbs, text_validation, vocabulary, skills
     app.register_blueprint(auth.bp)
     app.register_blueprint(verbs.bp)
     app.register_blueprint(text_validation.bp)
     app.register_blueprint(vocabulary.bp)
+    app.register_blueprint(skills.bp)
 
     # Create tables if they don't exist
     with app.app_context():

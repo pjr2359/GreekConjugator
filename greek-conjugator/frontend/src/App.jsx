@@ -8,6 +8,7 @@ import NounDeclinationApp from './components/NounDeclinationApp';
 import AdjectiveApp from './components/AdjectiveApp';
 import ArticleApp from './components/ArticleApp';
 import VocabularyPractice from './components/VocabularyPractice';
+import ProgressMap from './components/ProgressMap';
 import { authService } from './services/api';
 
 const App = () => {
@@ -39,7 +40,7 @@ const App = () => {
     setPracticeSettings(settings);
 
     // Use new backend-powered practice for verb conjugations
-    if (settings.mode === 'verb' && settings.useBackend) {
+    if ((settings.mode === 'verb' || settings.mode === 'conjugation') && settings.useBackend) {
       setCurrentScreen('new-practice');
     } else {
       setCurrentScreen('practice');
@@ -72,15 +73,22 @@ const App = () => {
     setCurrentScreen('vocabulary');
   };
 
+  // Navigate to progress map
+  const handleViewProgress = () => {
+    setCurrentScreen('progress');
+  };
+
   // Render current screen for authenticated users
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
-        return <HomeScreen onStartPractice={handleStartPractice} onStartVocabulary={handleStartVocabulary} user={user} />;
+        return <HomeScreen onStartPractice={handleStartPractice} onStartVocabulary={handleStartVocabulary} onViewProgress={handleViewProgress} user={user} />;
       case 'new-practice':
-        return <PracticeSession user={user} onBackToHome={handleBackToHome} />;
+        return <PracticeSession user={user} onBackToHome={handleBackToHome} settings={practiceSettings} />;
       case 'vocabulary':
         return <VocabularyPractice user={user} onBackToHome={handleBackToHome} />;
+      case 'progress':
+        return <ProgressMap user={user} onBackToHome={handleBackToHome} onStartPractice={handleStartPractice} />;
       case 'practice':
         // Select the appropriate practice component based on mode
         switch (practiceSettings.mode) {

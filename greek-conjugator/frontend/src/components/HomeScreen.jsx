@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { verbsService } from '../services/api';
 
-const HomeScreen = ({ onStartPractice, onStartVocabulary, user }) => {
+const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }) => {
   // Practice mode state
   const [selectedMode, setSelectedMode] = useState('verb');
   const [stats, setStats] = useState(null);
@@ -163,6 +163,33 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, user }) => {
                   hover:from-purple-600 hover:to-pink-600 transition-all text-lg"
               >
                 Practice Conjugations
+              </button>
+            </div>
+          </div>
+
+          {/* Progress Map Card */}
+          <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    🗺️ Progress Map
+                  </h2>
+                  <p className="text-amber-100 mt-1">Track your journey</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-white">11</div>
+                  <div className="text-amber-200 text-sm">skills</div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4">
+              <button
+                onClick={onViewProgress}
+                className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl 
+                  hover:from-amber-600 hover:to-orange-600 transition-all text-lg"
+              >
+                View Progress
               </button>
             </div>
           </div>
