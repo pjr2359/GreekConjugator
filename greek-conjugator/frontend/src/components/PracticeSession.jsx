@@ -2,6 +2,67 @@ import React, { useState, useEffect } from 'react';
 import GreekKeyboard, { compareGreekTexts } from './GreekKeyboard';
 import { verbsService, textValidationService } from '../services/api';
 
+// Grammar term definitions for tooltips (lowercase keys to match database values)
+const grammarTerms = {
+  // Tenses (lowercase)
+  'present': { greek: 'Ενεστώτας', desc: 'Action happening now', example: 'γράφω (I write)' },
+  'imperfect': { greek: 'Παρατατικός', desc: 'Continuous past action', example: 'έγραφα (I was writing)' },
+  'aorist': { greek: 'Αόριστος', desc: 'Simple past action', example: 'έγραψα (I wrote)' },
+  'future': { greek: 'Μέλλοντας', desc: 'Action that will happen', example: 'θα γράψω (I will write)' },
+  'perfect': { greek: 'Παρακείμενος', desc: 'Completed action', example: 'έχω γράψει (I have written)' },
+  // Moods (lowercase)
+  'indicative': { greek: 'Οριστική', desc: 'Stating facts', example: 'Γράφει γράμματα' },
+  'subjunctive': { greek: 'Υποτακτική', desc: 'Wishes, possibilities', example: 'να γράψω' },
+  'imperative': { greek: 'Προστακτική', desc: 'Commands', example: 'Γράψε! (Write!)' },
+  // Voice (lowercase)
+  'active': { greek: 'Ενεργητική', desc: 'Subject does action', example: 'πλένω (I wash)' },
+  'passive': { greek: 'Παθητική', desc: 'Subject receives action', example: 'πλένομαι (I am washed)' },
+  // Number (lowercase)
+  'singular': { greek: 'Ενικός', desc: 'One person', example: 'γράφω' },
+  'plural': { greek: 'Πληθυντικός', desc: 'Multiple people', example: 'γράφουμε' },
+};
+
+// Tooltip component for grammar terms
+const GrammarTerm = ({ term }) => {
+  if (!term) return null;
+  const key = term.toLowerCase();
+  const info = grammarTerms[key];
+  
+  // Capitalize for display
+  const displayTerm = term.charAt(0).toUpperCase() + term.slice(1);
+  
+  if (!info) return <span className="font-medium">{displayTerm}</span>;
+  
+  return (
+    <span className="relative group inline-block">
+      <span className="font-medium underline decoration-dotted decoration-purple-400/70 cursor-help">
+        {displayTerm}
+      </span>
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg 
+        opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+        <span className="font-bold text-purple-400">{info.greek}</span>
+        <br />
+        <span className="text-slate-300">{info.desc}</span>
+        <br />
+        <span className="text-slate-400 italic">e.g. {info.example}</span>
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></span>
+      </span>
+    </span>
+  );
+};
+
+// Parse and render conjugation prompt with tooltips
+const ConjugationPrompt = ({ tense, mood, voice, number }) => {
+  return (
+    <span className="text-white/90 flex flex-wrap justify-center gap-2">
+      {tense && <GrammarTerm term={tense} />}
+      {mood && <><span className="text-white/50">•</span><GrammarTerm term={mood} /></>}
+      {voice && <><span className="text-white/50">•</span><GrammarTerm term={voice} /></>}
+      {number && <><span className="text-white/50">•</span><GrammarTerm term={number} /></>}
+    </span>
+  );
+};
+
 const PracticeSession = ({ user, onBackToHome }) => {
   const [sessionData, setSessionData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -17,9 +78,11 @@ const PracticeSession = ({ user, onBackToHome }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isEndlessMode, setIsEndlessMode] = useState(true); // Default to endless mode
   // New smart practice features
-  const [practiceMode, setPracticeMode] = useState('conjugation'); // 'conjugation', 'multiple_choice', 'smart'
+  const [practiceMode, setPracticeMode] = useState('conjugation'); // 'conjugation', 'multiple_choice', 'smart', 'flashcard'
+  const [answerMode, setAnswerMode] = useState('multiple_choice'); // 'multiple_choice', 'type', 'flashcard'
   const [smartQuestion, setSmartQuestion] = useState(null);
   const [selectedMultipleChoice, setSelectedMultipleChoice] = useState(null);
+  const [flashcardRevealed, setFlashcardRevealed] = useState(false);
   const [practiceStats, setPracticeStats] = useState({
     totalQuestions: 0,
     correctAnswers: 0,
@@ -287,12 +350,7 @@ const PracticeSession = ({ user, onBackToHome }) => {
     setScore({ correct: 0, total: 0 });
   };
 
-  // Start session on component mount
-  useEffect(() => {
-    if (user && !sessionData) {
-      startSession(); // Start session automatically when component loads
-    }
-  }, [user, sessionData]);
+  // Don't auto-start - wait for user to click Start Practice
 
   // Generate smart question when practice mode changes or new question is needed
   useEffect(() => {
@@ -312,49 +370,110 @@ const PracticeSession = ({ user, onBackToHome }) => {
 
   const question = getCurrentQuestion();
 
-  if (loading || !sessionData) {
+  // Show loading spinner only when actively loading
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading practice session...</p>
+        </div>
       </div>
     );
   }
 
-  if (sessionComplete && !isEndlessMode) {
-    const accuracy = Math.round((score.correct / score.total) * 100);
+  // Show start screen when no session data
+  if (!sessionData) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Session Complete! 🎉</h2>
-          <div className="text-6xl mb-4">{accuracy >= 80 ? '🏆' : accuracy >= 60 ? '👏' : '💪'}</div>
-          <p className="text-xl text-gray-600 mb-6">
-            You scored {score.correct} out of {score.total} ({accuracy}%)
-          </p>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => startSession('graded', 3)}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Start New Session
-            </button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-center">
+            <div className="text-5xl mb-2">📝</div>
+            <h2 className="text-2xl font-bold text-white">Κλίση Ρημάτων</h2>
+            <p className="text-purple-100">Conjugation Practice</p>
+          </div>
+          
+          <div className="p-6">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                <div className="text-lg font-bold text-white">87</div>
+                <div className="text-xs text-slate-400">Verbs</div>
+              </div>
+              <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                <div className="text-lg font-bold text-white">5,400+</div>
+                <div className="text-xs text-slate-400">Forms</div>
+              </div>
+              <div className="bg-slate-700/50 rounded-lg p-3 text-center">
+                <div className="text-lg font-bold text-white">🧠</div>
+                <div className="text-xs text-slate-400">SRS</div>
+              </div>
+            </div>
+            
+            {/* Answer Mode Selection */}
+            <div className="mb-6">
+              <label className="block text-slate-400 text-sm mb-3">Answer Mode</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setAnswerMode('multiple_choice')}
+                  className={`p-3 rounded-xl border transition-all text-center ${
+                    answerMode === 'multiple_choice'
+                      ? 'border-purple-500 bg-purple-500/20 text-white'
+                      : 'border-slate-600 text-slate-400 hover:border-slate-500'
+                  }`}
+                >
+                  <div className="text-xl mb-1">🔘</div>
+                  <div className="text-xs">Multiple<br/>Choice</div>
+                </button>
+                <button
+                  onClick={() => setAnswerMode('type')}
+                  className={`p-3 rounded-xl border transition-all text-center ${
+                    answerMode === 'type'
+                      ? 'border-purple-500 bg-purple-500/20 text-white'
+                      : 'border-slate-600 text-slate-400 hover:border-slate-500'
+                  }`}
+                >
+                  <div className="text-xl mb-1">⌨️</div>
+                  <div className="text-xs">Type<br/>Answer</div>
+                </button>
+                <button
+                  onClick={() => setAnswerMode('flashcard')}
+                  className={`p-3 rounded-xl border transition-all text-center ${
+                    answerMode === 'flashcard'
+                      ? 'border-purple-500 bg-purple-500/20 text-white'
+                      : 'border-slate-600 text-slate-400 hover:border-slate-500'
+                  }`}
+                >
+                  <div className="text-xl mb-1">🃏</div>
+                  <div className="text-xs">Flashcard<br/>Self-Grade</div>
+                </button>
+              </div>
+              <p className="text-slate-500 text-xs mt-2 text-center">
+                {answerMode === 'multiple_choice' && 'Pick the correct conjugation from options'}
+                {answerMode === 'type' && 'Type the conjugation in Greek'}
+                {answerMode === 'flashcard' && 'Think of answer, then reveal and self-grade'}
+              </p>
+            </div>
+            
             <button
               onClick={() => {
-                setIsEndlessMode(true);
-                setSessionComplete(false);
-                setCurrentQuestionIndex(0);
-                setScore({ correct: 0, total: 0 });
+                setPracticeMode(answerMode);
+                setFlashcardRevealed(false);
+                startSession();
               }}
-              className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
+              className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                hover:from-purple-600 hover:to-pink-600 transition-all text-lg mb-3"
             >
-              Switch to Endless Mode
+              ▶️ Start Practice
             </button>
+            
             {onBackToHome && (
               <button
                 onClick={onBackToHome}
-                className="w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors"
+                className="w-full py-3 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 transition-colors"
               >
-                Back to Home
+                ← Back to Home
               </button>
             )}
           </div>
@@ -363,254 +482,334 @@ const PracticeSession = ({ user, onBackToHome }) => {
     );
   }
 
+  if (sessionComplete && !isEndlessMode) {
+    const accuracy = Math.round((score.correct / score.total) * 100);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+          <div className="text-center py-8 bg-gradient-to-r from-purple-600 to-pink-600">
+            <div className="text-6xl mb-2">{accuracy >= 80 ? '🏆' : accuracy >= 60 ? '👏' : '💪'}</div>
+            <h2 className="text-2xl font-bold text-white">Session Complete!</h2>
+          </div>
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="text-4xl font-bold text-white mb-1">{accuracy}%</div>
+              <p className="text-slate-400">{score.correct} / {score.total} correct</p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => startSession('graded', 3)}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all"
+              >
+                Start New Session
+              </button>
+              <button
+                onClick={() => {
+                  setIsEndlessMode(true);
+                  setSessionComplete(false);
+                  setCurrentQuestionIndex(0);
+                  setScore({ correct: 0, total: 0 });
+                }}
+                className="w-full py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors"
+              >
+                Endless Mode
+              </button>
+              {onBackToHome && (
+                <button
+                  onClick={onBackToHome}
+                  className="w-full py-3 bg-slate-700/50 text-slate-300 rounded-xl hover:bg-slate-600 transition-colors"
+                >
+                  Back to Home
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!question) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading Question...</h2>
-          <button
-            onClick={() => startSession()}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-          >
-            Start Practice Session
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 flex items-center justify-center">
+        <div className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 p-8 text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <h2 className="text-xl font-bold text-white mb-4">Preparing Question...</h2>
+          <p className="text-slate-400 mb-4">Loading verb conjugations</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      {/* Header with navigation and mode toggle */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          {onBackToHome && (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+          {/* Header */}
+          <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              {onBackToHome && (
+                <button
+                  onClick={onBackToHome}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  ← Back
+                </button>
+              )}
+              <h1 className="text-lg font-bold text-white">
+                {isEndlessMode ? '∞ Endless' : 'Practice Session'}
+              </h1>
+            </div>
             <button
-              onClick={onBackToHome}
-              className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
+              onClick={toggleMode}
+              className="text-sm text-slate-400 hover:text-white transition-colors"
             >
-              ← Home
+              {isEndlessMode ? 'Session Mode' : 'Endless Mode'}
             </button>
-          )}
-          <h1 className="text-xl font-bold text-gray-800">
-            {isEndlessMode ? 'Endless Practice' : 'Practice Session'}
-          </h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={toggleMode}
-            className="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors text-sm"
-          >
-            {isEndlessMode ? 'Session Mode' : 'Endless Mode'}
-          </button>
-        </div>
-      </div>
+          </div>
 
-      {/* Practice Mode Selector */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-semibold text-gray-800 mb-3">🎯 Practice Mode</h3>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setPracticeMode('conjugation')}
-            className={`py-2 px-4 rounded transition-colors text-sm ${
-              practiceMode === 'conjugation'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-blue-50'
-            }`}
+          <div className="p-6">
+            {/* Practice Mode Selector */}
+            <div className="mb-6 p-4 bg-slate-700/50 rounded-xl">
+              <h3 className="font-semibold text-slate-300 mb-3 text-sm">Practice Mode</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setPracticeMode('conjugation')}
+                  className={`py-2 px-4 rounded-lg transition-colors text-sm ${
+                    practiceMode === 'conjugation'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
+                  }`}
           >
             ✍️ Type Answer
           </button>
           <button
             onClick={() => setPracticeMode('multiple_choice')}
-            className={`py-2 px-4 rounded transition-colors text-sm ${
+            className={`py-2 px-4 rounded-lg transition-colors text-sm ${
               practiceMode === 'multiple_choice'
-                ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-green-50'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
             }`}
           >
             📝 Multiple Choice
           </button>
           <button
             onClick={() => setPracticeMode('smart')}
-            className={`py-2 px-4 rounded transition-colors text-sm ${
+            className={`py-2 px-4 rounded-lg transition-colors text-sm ${
               practiceMode === 'smart'
-                ? 'bg-purple-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-purple-50'
+                ? 'bg-pink-600 text-white'
+                : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
             }`}
           >
             🧠 Smart Mix
           </button>
-        </div>
-      </div>
-
-      {/* Real-time practice statistics */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-        <h3 className="font-semibold text-blue-800 mb-2">📊 Practice Statistics</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 text-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{practiceStats.totalQuestions}</div>
-            <div className="text-gray-600">Total Questions</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{practiceStats.correctAnswers}</div>
-            <div className="text-gray-600">Correct Answers</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{practiceStats.accuracy}%</div>
-            <div className="text-gray-600">Accuracy</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{practiceStats.streak}</div>
-            <div className="text-gray-600">Current Streak</div>
-          </div>
-        </div>
-        {practiceStats.maxStreak > 0 && (
-          <div className="text-center mt-2 text-sm text-gray-600">
-            Best streak: {practiceStats.maxStreak} 🔥
-          </div>
-        )}
-      </div>
-
-      {/* Progress bar (only for session mode) */}
-      {!isEndlessMode && (
-        <div className="mb-6">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Question {currentQuestionIndex + 1} of {sessionData?.verbs.length || 0}</span>
-            <span>Score: {score.correct}/{score.total}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentQuestionIndex + 1) / (sessionData?.verbs.length || 1)) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
-
-      {/* Question */}
-      <div className="mb-6">
-        {smartQuestion && (practiceMode === 'smart' || practiceMode === 'multiple_choice') ? (
-          // Smart Practice Question
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              {smartQuestion.type === 'multiple_choice' ? '📝 Multiple Choice' : '✍️ Conjugate the Verb'}
-            </h2>
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-              <p className="text-lg text-gray-700">
-                {smartQuestion.question}
-              </p>
-            </div>
-
-            <div className="text-center mb-4">
-              <span className="text-3xl font-bold text-blue-600" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                {smartQuestion.verb.infinitive}
-              </span>
-              <p className="text-gray-600 mt-1">"{smartQuestion.translation}"</p>
-              {smartQuestion.hint && (
-                <p className="text-sm text-gray-500 mt-2 italic">{smartQuestion.hint}</p>
-              )}
-            </div>
-          </div>
-        ) : (
-          // Regular Practice Question
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Conjugate the Verb
-            </h2>
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-              <p className="text-lg text-gray-700">
-                {question.prompt}
-              </p>
-            </div>
-
-            <div className="text-center mb-4">
-              <span className="text-3xl font-bold text-blue-600" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-                {question.verb.infinitive}
-              </span>
-              <p className="text-gray-600 mt-1">{question.verb.english}</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Answer input */}
-      {!showResult ? (
-        <div className="mb-6">
-          {smartQuestion && smartQuestion.type === 'multiple_choice' ? (
-            // Multiple Choice Options
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">Choose the correct answer:</h3>
-              {smartQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleMultipleChoiceSelect(option)}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-colors ${
-                    selectedMultipleChoice === option
-                      ? 'border-blue-500 bg-blue-50 text-blue-800'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-                >
-                  <span className="text-lg">{option}</span>
-                </button>
-              ))}
-              
-              <div className="flex justify-center gap-4 mt-6">
-                <button
-                  onClick={submitSmartAnswer}
-                  disabled={!selectedMultipleChoice || loading}
-                  className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                >
-                  {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
-                  Submit Answer
-                </button>
               </div>
             </div>
-          ) : (
-            // Text Input (Regular and Smart Conjugation)
+
+            {/* Real-time practice statistics */}
+            <div className="mb-6 grid grid-cols-4 gap-3">
+              <div className="text-center p-3 bg-slate-700/50 rounded-xl">
+                <div className="text-xl font-bold text-blue-400">{practiceStats.totalQuestions}</div>
+                <div className="text-xs text-slate-500">Total</div>
+              </div>
+              <div className="text-center p-3 bg-slate-700/50 rounded-xl">
+                <div className="text-xl font-bold text-emerald-400">{practiceStats.correctAnswers}</div>
+                <div className="text-xs text-slate-500">Correct</div>
+              </div>
+              <div className="text-center p-3 bg-slate-700/50 rounded-xl">
+                <div className="text-xl font-bold text-amber-400">{practiceStats.accuracy}%</div>
+                <div className="text-xs text-slate-500">Accuracy</div>
+              </div>
+              <div className="text-center p-3 bg-slate-700/50 rounded-xl">
+                <div className="text-xl font-bold text-pink-400">{practiceStats.streak} 🔥</div>
+                <div className="text-xs text-slate-500">Streak</div>
+              </div>
+            </div>
+
+            {/* Progress bar (only for session mode) */}
+            {!isEndlessMode && (
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-slate-400 mb-2">
+                  <span>{currentQuestionIndex + 1} / {sessionData?.verbs.length || 0}</span>
+                  <span>{score.correct}/{score.total} correct</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${((currentQuestionIndex + 1) / (sessionData?.verbs.length || 1)) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Question */}
+            <div className="mb-6">
+              {smartQuestion && (practiceMode === 'smart' || practiceMode === 'multiple_choice') ? (
+                // Smart Practice Question
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
+                  <div className="text-white/80 text-sm mb-2">
+                    {smartQuestion.type === 'multiple_choice' ? '📝 Multiple Choice' : '✍️ Conjugate'}
+                  </div>
+                  <div className="text-center mb-4">
+                    <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                      {smartQuestion.verb.infinitive}
+                    </span>
+                    <p className="text-white/70 mt-1">"{smartQuestion.translation}"</p>
+                  </div>
+                  <div className="text-center text-sm bg-white/10 rounded-lg p-3">
+                    <ConjugationPrompt 
+                      tense={smartQuestion.tense || 'present'}
+                      mood={smartQuestion.mood || 'indicative'}
+                      voice={smartQuestion.voice}
+                      number={smartQuestion.number || 'singular'}
+                    />
+                    <p className="text-white/50 text-xs mt-2">💡 Hover over underlined terms for definitions</p>
+                  </div>
+                  {smartQuestion.hint && (
+                    <p className="text-sm text-white/60 mt-3 italic text-center">{smartQuestion.hint}</p>
+                  )}
+                </div>
+              ) : (
+                // Regular Practice Question
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
+                  <div className="text-white/80 text-sm mb-2">✍️ Conjugate the Verb</div>
+                  <div className="text-center mb-4">
+                    <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                      {question.verb.infinitive}
+                    </span>
+                    <p className="text-white/70 mt-1">"{question.verb.english}"</p>
+                  </div>
+                  <div className="text-center text-sm bg-white/10 rounded-lg p-3">
+                    <ConjugationPrompt 
+                      tense={question.conjugation.tense}
+                      mood={question.conjugation.mood}
+                      voice={question.conjugation.voice}
+                      number={question.conjugation.number}
+                    />
+                    <p className="text-white/50 text-xs mt-2">💡 Hover over underlined terms for definitions</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Answer input */}
+            {!showResult ? (
+              <div className="mb-6">
+                {/* Flashcard Mode */}
+                {answerMode === 'flashcard' ? (
+                  <div className="text-center">
+                    {!flashcardRevealed ? (
+                      <>
+                        <p className="text-slate-400 mb-4">Think of the answer, then reveal to check</p>
+                        <button
+                          onClick={() => setFlashcardRevealed(true)}
+                          className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                            hover:from-purple-600 hover:to-pink-600 transition-all text-lg"
+                        >
+                          👁️ Reveal Answer
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-slate-700/50 rounded-xl p-6 mb-4">
+                          <p className="text-slate-400 text-sm mb-2">Correct Answer:</p>
+                          <p className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                            {question.conjugation.form}
+                          </p>
+                        </div>
+                        <p className="text-slate-400 mb-4">Did you get it right?</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => {
+                              setIsCorrect(false);
+                              setShowResult(true);
+                              setFlashcardRevealed(false);
+                              setPracticeStats(prev => ({
+                                ...prev,
+                                totalQuestions: prev.totalQuestions + 1,
+                                streak: 0,
+                                accuracy: Math.round((prev.correctAnswers / (prev.totalQuestions + 1)) * 100)
+                              }));
+                            }}
+                            className="py-4 bg-red-500/20 border border-red-500 text-red-400 font-bold rounded-xl hover:bg-red-500/30 transition-all"
+                          >
+                            ❌ Wrong
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsCorrect(true);
+                              setShowResult(true);
+                              setFlashcardRevealed(false);
+                              setPracticeStats(prev => ({
+                                ...prev,
+                                totalQuestions: prev.totalQuestions + 1,
+                                correctAnswers: prev.correctAnswers + 1,
+                                streak: prev.streak + 1,
+                                maxStreak: Math.max(prev.maxStreak, prev.streak + 1),
+                                accuracy: Math.round(((prev.correctAnswers + 1) / (prev.totalQuestions + 1)) * 100)
+                              }));
+                            }}
+                            className="py-4 bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold rounded-xl hover:bg-emerald-500/30 transition-all"
+                          >
+                            ✓ Correct
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : answerMode === 'multiple_choice' || (smartQuestion && smartQuestion.type === 'multiple_choice') ? (
+                  // Multiple Choice Options
+                  <div className="space-y-3">
+                    {(smartQuestion?.options || [question.conjugation.form, 'γράφει', 'γράφουν', 'γράφουμε'].sort(() => Math.random() - 0.5)).map((option, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleMultipleChoiceSelect(option)}
+                        className={`w-full p-4 text-left rounded-xl border-2 transition-all ${
+                          selectedMultipleChoice === option
+                            ? 'border-purple-500 bg-purple-500/20 text-white'
+                            : 'border-slate-600 bg-slate-700/50 text-slate-200 hover:border-slate-500'
+                        }`}
+                        style={{ fontFamily: 'Georgia, serif' }}
+                      >
+                        <span className="text-lg">{option}</span>
+                      </button>
+                    ))}
+                    
+                    <button
+                      onClick={submitSmartAnswer}
+                      disabled={!selectedMultipleChoice || loading}
+                      className="w-full mt-4 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                        hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {loading ? 'Checking...' : 'Submit Answer'}
+                    </button>
+                  </div>
+                ) : (
+            // Type Answer Mode
             <div>
               <GreekKeyboard
                 value={userAnswer}
                 onTextChange={setUserAnswer}
-                placeholder="Type your answer..."
+                placeholder="Type the conjugation in Greek..."
                 showValidation={true}
                 correctAnswer={smartQuestion ? smartQuestion.correct_answer : question.conjugation.form}
                 autoTransliterate={true}
               />
 
-              <div className="flex justify-center gap-4 mt-4">
-                <button
-                  onClick={smartQuestion ? submitSmartAnswer : submitAnswer}
-                  disabled={!userAnswer.trim() || loading}
-                  className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                >
-                  {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
-                  Submit Answer
-                </button>
-
-                <button
-                  onClick={() => setShowHints(!showHints)}
-                  className="bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  {showHints ? 'Hide Hints' : 'Show Hints'}
-                </button>
-              </div>
-
-              {/* Enhanced hints section */}
-              {showHints && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-blue-800 mb-2">💡 Hints:</h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• <strong>Tense:</strong> {smartQuestion ? smartQuestion.conjugation.tense : question.conjugation.tense}</li>
-                    <li>• <strong>Mood:</strong> {smartQuestion ? smartQuestion.conjugation.mood : question.conjugation.mood}</li>
-                    <li>• <strong>Voice:</strong> {smartQuestion ? smartQuestion.conjugation.voice : question.conjugation.voice}</li>
-                    <li>• <strong>Person:</strong> {smartQuestion ? smartQuestion.conjugation.person : question.conjugation.person}</li>
-                    <li>• <strong>Number:</strong> {smartQuestion ? smartQuestion.conjugation.number : question.conjugation.number}</li>
-                    <li>• You can type Latin characters (e.g., "grapho" → "γραφω")</li>
-                    <li>• Accents are optional for matching - focus on the base letters first</li>
-                  </ul>
-                </div>
-              )}
+              <button
+                onClick={smartQuestion ? submitSmartAnswer : submitAnswer}
+                disabled={!userAnswer.trim() || loading}
+                className="w-full mt-4 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                  hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {loading ? 'Checking...' : 'Submit Answer'}
+              </button>
+              
+              <p className="text-slate-500 text-xs text-center mt-2">
+                💡 Type in Latin (e.g., "grapho" → "γραφω") • Accents optional
+              </p>
             </div>
           )}
         </div>
@@ -654,20 +853,22 @@ const PracticeSession = ({ user, onBackToHome }) => {
             </div>
           </div>
 
-          <div className="text-center">
-            <button
-              onClick={nextQuestion}
-              className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {isEndlessMode ? 'Next Question' : 'Continue'}
-            </button>
-          </div>
+          <button
+            onClick={nextQuestion}
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+              hover:from-purple-600 hover:to-pink-600 transition-all"
+          >
+            {isEndlessMode ? 'Next Question →' : 'Continue →'}
+          </button>
         </div>
       )}
 
-      {/* Hints */}
-      <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-        💡 <strong>Tip:</strong> You can type in Latin characters (e.g., "grapho") and they'll be converted to Greek automatically.
+            {/* Hints */}
+            <div className="text-sm text-slate-400 bg-slate-700/50 p-4 rounded-xl mt-6">
+              💡 <strong className="text-slate-300">Tip:</strong> Type in Latin characters (e.g., "grapho") for automatic Greek conversion.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

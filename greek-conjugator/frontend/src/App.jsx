@@ -7,6 +7,7 @@ import GreekConjugationApp from './components/GreekConjugationApp';
 import NounDeclinationApp from './components/NounDeclinationApp';
 import AdjectiveApp from './components/AdjectiveApp';
 import ArticleApp from './components/ArticleApp';
+import VocabularyPractice from './components/VocabularyPractice';
 import { authService } from './services/api';
 
 const App = () => {
@@ -52,8 +53,11 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🏛️</div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-400 mx-auto"></div>
+        </div>
       </div>
     );
   }
@@ -63,13 +67,20 @@ const App = () => {
     return <AuthComponent user={user} setUser={setUser} />;
   }
 
+  // Navigate to vocabulary practice
+  const handleStartVocabulary = () => {
+    setCurrentScreen('vocabulary');
+  };
+
   // Render current screen for authenticated users
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
-        return <HomeScreen onStartPractice={handleStartPractice} user={user} />;
+        return <HomeScreen onStartPractice={handleStartPractice} onStartVocabulary={handleStartVocabulary} user={user} />;
       case 'new-practice':
         return <PracticeSession user={user} onBackToHome={handleBackToHome} />;
+      case 'vocabulary':
+        return <VocabularyPractice user={user} onBackToHome={handleBackToHome} />;
       case 'practice':
         // Select the appropriate practice component based on mode
         switch (practiceSettings.mode) {
@@ -100,7 +111,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <AuthComponent user={user} setUser={setUser} />
       {renderScreen()}
     </div>

@@ -153,6 +153,96 @@ export const verbsService = {
 };
 
 // Text validation service
+// Vocabulary service
+export const vocabularyService = {
+  async getWords(page = 1, perPage = 20, filters = {}) {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+        ...filters
+      });
+      const response = await api.get(`/vocabulary/words?${params}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch words');
+    }
+  },
+
+  async getStats() {
+    try {
+      const response = await api.get('/vocabulary/stats');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch vocabulary stats');
+    }
+  },
+
+  async startPractice(options = {}) {
+    try {
+      const response = await api.post('/vocabulary/practice/start', options);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to start vocabulary practice');
+    }
+  },
+
+  async startSmartPractice(options = {}) {
+    try {
+      const response = await api.post('/vocabulary/practice/smart', options);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to start smart practice');
+    }
+  },
+
+  async getQuestion(wordId, direction = 'greek_to_english', questionType = 'multiple_choice') {
+    try {
+      const response = await api.post('/vocabulary/practice/question', {
+        word_id: wordId,
+        direction,
+        question_type: questionType
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to get question');
+    }
+  },
+
+  async submitAnswer(wordId, answer, correctAnswer, direction) {
+    try {
+      const response = await api.post('/vocabulary/practice/answer', {
+        word_id: wordId,
+        answer,
+        correct_answer: correctAnswer,
+        direction
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to submit answer');
+    }
+  },
+
+  async getCategories() {
+    try {
+      const response = await api.get('/vocabulary/categories');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch categories');
+    }
+  },
+
+  async getWord(wordId) {
+    try {
+      const response = await api.get(`/vocabulary/word/${wordId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch word');
+    }
+  }
+};
+
+// Text validation service
 export const textValidationService = {
   async validate(text) {
     try {
