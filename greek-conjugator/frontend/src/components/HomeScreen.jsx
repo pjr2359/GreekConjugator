@@ -1,386 +1,197 @@
 import React, { useState, useEffect } from 'react';
-import { verbsService } from '../services/api';
+import { vocabularyService, skillsService } from '../services/api';
 
 const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }) => {
-  // Practice mode state
-  const [selectedMode, setSelectedMode] = useState('verb');
-  const [stats, setStats] = useState(null);
-  const [showGrammarOptions, setShowGrammarOptions] = useState(false);
+  const [vocabStats, setVocabStats] = useState(null);
+  const [skillStats, setSkillStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Verb specific options
-  const [verbSettings, setVerbSettings] = useState({
-    tense: 'all',
-    type: 'all',
-    group: 'all'
-  });
-
-  // Noun specific options
-  const [nounSettings, setNounSettings] = useState({
-    case: 'all',
-    number: 'all',
-    gender: 'all'
-  });
-
-  // Load user stats on component mount
+  // Load all stats on component mount
   useEffect(() => {
-    const loadStats = async () => {
+    const loadAllStats = async () => {
+      if (!user) return;
+      
+      setLoading(true);
       try {
-        const userStats = await verbsService.getUserStats();
-        setStats(userStats);
+        // Fetch all stats in parallel for speed
+        const [vocabData, skillData] = await Promise.all([
+          vocabularyService.getStats().catch(() => null),
+          skillsService.getSkillTree().catch(() => null)
+        ]);
+        
+        setVocabStats(vocabData);
+        setSkillStats(skillData);
       } catch (error) {
         console.error('Failed to load stats:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (user) {
-      loadStats();
-    }
+    loadAllStats();
   }, [user]);
 
-  const handleVerbSettingChange = (setting, value) => {
-    setVerbSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
+  // Start conjugation practice with backend
+  const startConjugationPractice = () => {
+    onStartPractice({
+      mode: 'verb',
+      useBackend: true
+    });
   };
 
-  const handleNounSettingChange = (setting, value) => {
-    setNounSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-  };
-
-  // Start practice with current settings
-  const startPractice = (useBackend = false) => {
-    const settings = {
-      mode: selectedMode,
-      useBackend,
-      ...(selectedMode === 'verb' ? verbSettings : {}),
-      ...(selectedMode === 'noun' ? nounSettings : {})
-    };
-
-    onStartPractice(settings);
-  };
+  // Calculate total due items
+  const totalDue = (vocabStats?.due_for_review || 0);
+  const vocabKnown = vocabStats?.words_practiced || 0;
+  const vocabTotal = vocabStats?.unlocked_words || 100;
+  const skillsMastered = skillStats?.skills?.filter(s => s.mastery_level >= 3).length || 0;
+  const totalSkills = skillStats?.total_skills || 11;
+  const overallAccuracy = vocabStats?.accuracy_rate || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       <div className="max-w-2xl mx-auto pt-4">
         {/* Header */}
-        <header className="text-center mb-8">
-          <div className="text-5xl mb-3">🏛️</div>
-          <h1 className="text-3xl font-bold text-white mb-1">
-            Ελληνικά
-          </h1>
-          <p className="text-blue-300">Greek Language Learning</p>
+        <header className="text-center mb-6">
+          <div className="text-4xl mb-2">🏛️</div>
+          <h1 className="text-2xl font-bold text-white">Ελληνικά</h1>
         </header>
 
-        {/* Quick Stats */}
-        {stats && (
-          <div className="grid grid-cols-4 gap-3 mb-6">
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700">
-              <div className="text-xl font-bold text-blue-400">{stats.total_verbs_practiced}</div>
-              <div className="text-xs text-slate-500">Verbs</div>
+        {/* Unified Progress Dashboard */}
+        <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-4 mb-6">
+          {/* Top row - Key metrics */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {/* Vocabulary Progress */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-cyan-400">{vocabKnown}</div>
+              <div className="text-xs text-slate-400">Words Known</div>
+              <div className="mt-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
+                  style={{ width: `${Math.min((vocabKnown / vocabTotal) * 100, 100)}%` }}
+                />
+              </div>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700">
-              <div className="text-xl font-bold text-emerald-400">{stats.accuracy_rate}%</div>
-              <div className="text-xs text-slate-500">Accuracy</div>
+            
+            {/* Skills Progress */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">{skillsMastered}/{totalSkills}</div>
+              <div className="text-xs text-slate-400">Skills</div>
+              <div className="mt-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
+                  style={{ width: `${(skillsMastered / totalSkills) * 100}%` }}
+                />
+              </div>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700">
-              <div className="text-xl font-bold text-amber-400">{stats.due_cards}</div>
-              <div className="text-xs text-slate-500">Due</div>
-            </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center border border-slate-700">
-              <div className="text-xl font-bold text-purple-400">{stats.total_attempts}</div>
-              <div className="text-xs text-slate-500">Total</div>
+            
+            {/* Accuracy */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-emerald-400">{overallAccuracy}%</div>
+              <div className="text-xs text-slate-400">Accuracy</div>
+              <div className="mt-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-500"
+                  style={{ width: `${overallAccuracy}%` }}
+                />
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Main Practice Cards */}
-        <div className="space-y-4 mb-6">
-          {/* Vocabulary Card - Primary */}
-          <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    📚 Λεξιλόγιο
-                  </h2>
-                  <p className="text-blue-100 mt-1">Vocabulary Flashcards</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-white">2,500+</div>
-                  <div className="text-blue-200 text-sm">words</div>
-                </div>
+          {/* Due for review banner */}
+          {totalDue > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-400">🔔</span>
+                <span className="text-amber-200 text-sm">
+                  <strong>{totalDue}</strong> {totalDue === 1 ? 'word' : 'words'} due for review
+                </span>
               </div>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-white">🧠</div>
-                  <div className="text-xs text-slate-400">Smart SRS</div>
-                </div>
-                <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-white">🎯</div>
-                  <div className="text-xs text-slate-400">Daily Goals</div>
-                </div>
-                <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-white">📈</div>
-                  <div className="text-xs text-slate-400">Progress</div>
-                </div>
-              </div>
-              <button
+              <button 
                 onClick={onStartVocabulary}
-                className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl 
-                  hover:from-blue-600 hover:to-cyan-600 transition-all text-lg"
+                className="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1 rounded-lg transition-colors"
               >
-                Study Vocabulary
+                Review Now
               </button>
             </div>
-          </div>
-
-          {/* Conjugation Practice Card */}
-          <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    📝 Κλίσεις
-                  </h2>
-                  <p className="text-purple-100 mt-1">Conjugation Practice</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-white">87</div>
-                  <div className="text-purple-200 text-sm">verbs</div>
-                </div>
-              </div>
-            </div>
-            <div className="p-4">
-              <button
-                onClick={() => startPractice(true)}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
-                  hover:from-purple-600 hover:to-pink-600 transition-all text-lg"
-              >
-                Practice Conjugations
-              </button>
-            </div>
-          </div>
-
-          {/* Progress Map Card */}
-          <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-            <div className="bg-gradient-to-r from-amber-600 to-orange-600 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    🗺️ Progress Map
-                  </h2>
-                  <p className="text-amber-100 mt-1">Track your journey</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-white">11</div>
-                  <div className="text-amber-200 text-sm">skills</div>
-                </div>
-              </div>
-            </div>
-            <div className="p-4">
-              <button
-                onClick={onViewProgress}
-                className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl 
-                  hover:from-amber-600 hover:to-orange-600 transition-all text-lg"
-              >
-                View Progress
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Grammar Practice Toggle */}
-        <button
-          onClick={() => setShowGrammarOptions(!showGrammarOptions)}
-          className="w-full py-3 text-slate-400 hover:text-slate-300 transition-colors flex items-center justify-center gap-2 mb-4"
-        >
-          <span>{showGrammarOptions ? '▲' : '▼'}</span>
-          {showGrammarOptions ? 'Hide' : 'Show'} More Grammar Practice
-        </button>
-
-        {/* Grammar Options Panel */}
-        {showGrammarOptions && (
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-            <h3 className="text-white font-semibold mb-4">Grammar Practice</h3>
-            
-            {/* Mode selection */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <button
-                onClick={() => setSelectedMode('verb')}
-                className={`p-4 rounded-xl border transition-all ${
-                  selectedMode === 'verb' 
-                    ? 'border-blue-500 bg-blue-500/20 text-white' 
-                    : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <div className="text-center">
-                  <span className="text-2xl mb-2 block">🔤</span>
-                  <span className="font-medium">Verbs</span>
-                  <span className="text-xs block text-slate-500">Ρήματα</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setSelectedMode('noun')}
-                className={`p-4 rounded-xl border transition-all ${
-                  selectedMode === 'noun' 
-                    ? 'border-blue-500 bg-blue-500/20 text-white' 
-                    : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <div className="text-center">
-                  <span className="text-2xl mb-2 block">📝</span>
-                  <span className="font-medium">Nouns</span>
-                  <span className="text-xs block text-slate-500">Ουσιαστικά</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setSelectedMode('adjective')}
-                className={`p-4 rounded-xl border transition-all ${
-                  selectedMode === 'adjective' 
-                    ? 'border-blue-500 bg-blue-500/20 text-white' 
-                    : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <div className="text-center">
-                  <span className="text-2xl mb-2 block">🏷️</span>
-                  <span className="font-medium">Adjectives</span>
-                  <span className="text-xs block text-slate-500">Επίθετα</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setSelectedMode('article')}
-                className={`p-4 rounded-xl border transition-all ${
-                  selectedMode === 'article' 
-                    ? 'border-blue-500 bg-blue-500/20 text-white' 
-                    : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <div className="text-center">
-                  <span className="text-2xl mb-2 block">🔍</span>
-                  <span className="font-medium">Articles</span>
-                  <span className="text-xs block text-slate-500">Άρθρα</span>
-                </div>
-              </button>
+        {/* Practice Buttons */}
+        <div className="space-y-3">
+          {/* Vocabulary */}
+          <button
+            onClick={onStartVocabulary}
+            className="w-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl p-4 
+              flex items-center justify-between transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-2xl">
+                📚
+              </div>
+              <div className="text-left">
+                <div className="text-white font-semibold">Vocabulary</div>
+                <div className="text-slate-400 text-sm">{vocabStats?.new_available || 0} new available</div>
+              </div>
             </div>
+            <div className="text-slate-400 group-hover:text-white transition-colors">→</div>
+          </button>
 
-            {/* Verb options */}
-            {selectedMode === 'verb' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2">Tense (Χρόνος)</label>
-                  <select
-                    value={verbSettings.tense}
-                    onChange={(e) => handleVerbSettingChange('tense', e.target.value)}
-                    className="w-full p-3 bg-slate-700 border border-slate-600 rounded-xl text-white"
-                  >
-                    <option value="all">All Tenses</option>
-                    <option value="ενεστώτας">Present (Ενεστώτας)</option>
-                    <option value="αόριστος">Aorist (Αόριστος)</option>
-                    <option value="παρατατικός">Imperfect (Παρατατικός)</option>
-                    <option value="μέλλοντας">Future (Μέλλοντας)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2">Voice (Φωνή)</label>
-                  <select
-                    value={verbSettings.type}
-                    onChange={(e) => handleVerbSettingChange('type', e.target.value)}
-                    className="w-full p-3 bg-slate-700 border border-slate-600 rounded-xl text-white"
-                  >
-                    <option value="all">All Voices</option>
-                    <option value="ενεργητική φωνή">Active</option>
-                    <option value="παθητική φωνή">Passive</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={() => startPractice(false)}
-                  className="w-full py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-600 transition-colors"
-                >
-                  Start Practice
-                </button>
+          {/* Conjugations */}
+          <button
+            onClick={startConjugationPractice}
+            className="w-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl p-4 
+              flex items-center justify-between transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">
+                📝
               </div>
-            )}
-
-            {/* Noun options */}
-            {selectedMode === 'noun' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2">Case (Πτώση)</label>
-                  <select
-                    value={nounSettings.case}
-                    onChange={(e) => handleNounSettingChange('case', e.target.value)}
-                    className="w-full p-3 bg-slate-700 border border-slate-600 rounded-xl text-white"
-                  >
-                    <option value="all">All Cases</option>
-                    <option value="ονομαστική">Nominative</option>
-                    <option value="γενική">Genitive</option>
-                    <option value="αιτιατική">Accusative</option>
-                    <option value="κλητική">Vocative</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2">Gender (Γένος)</label>
-                  <select
-                    value={nounSettings.gender}
-                    onChange={(e) => handleNounSettingChange('gender', e.target.value)}
-                    className="w-full p-3 bg-slate-700 border border-slate-600 rounded-xl text-white"
-                  >
-                    <option value="all">All Genders</option>
-                    <option value="αρσενικό">Masculine</option>
-                    <option value="θηλυκό">Feminine</option>
-                    <option value="ουδέτερο">Neuter</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={() => startPractice(false)}
-                  className="w-full py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-600 transition-colors"
-                >
-                  Start Practice
-                </button>
+              <div className="text-left">
+                <div className="text-white font-semibold">Conjugations</div>
+                <div className="text-slate-400 text-sm">Practice verb forms</div>
               </div>
-            )}
+            </div>
+            <div className="text-slate-400 group-hover:text-white transition-colors">→</div>
+          </button>
 
-            {/* Adjective options */}
-            {selectedMode === 'adjective' && (
-              <div className="space-y-4">
-                <p className="text-slate-400 text-sm">
-                  Practice adjective agreement with nouns in gender, number, and case.
-                </p>
-                <button
-                  onClick={() => startPractice(false)}
-                  className="w-full py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-600 transition-colors"
-                >
-                  Start Practice
-                </button>
+          {/* Progress Map */}
+          <button
+            onClick={onViewProgress}
+            className="w-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl p-4 
+              flex items-center justify-between transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-2xl">
+                🗺️
               </div>
-            )}
+              <div className="text-left">
+                <div className="text-white font-semibold">Skill Tree</div>
+                <div className="text-slate-400 text-sm">{skillsMastered} of {totalSkills} mastered</div>
+              </div>
+            </div>
+            <div className="text-slate-400 group-hover:text-white transition-colors">→</div>
+          </button>
+        </div>
 
-            {/* Article options */}
-            {selectedMode === 'article' && (
-              <div className="space-y-4">
-                <p className="text-slate-400 text-sm">
-                  Practice using definite and indefinite articles correctly.
-                </p>
-                <button
-                  onClick={() => startPractice(false)}
-                  className="w-full py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-600 transition-colors"
-                >
-                  Start Practice
-                </button>
+        {/* Mini skill icons row */}
+        {skillStats?.skills && (
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {skillStats.skills.slice(0, 11).map((skill, i) => (
+              <div 
+                key={skill.category}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all
+                  ${skill.mastery_level >= 5 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-yellow-900' :
+                    skill.mastery_level >= 3 ? 'bg-emerald-600 text-white' :
+                    skill.mastery_level >= 1 ? 'bg-slate-600 text-slate-300' :
+                    'bg-slate-800 text-slate-600'}`}
+                title={`${skill.name}: Level ${skill.mastery_level}`}
+              >
+                {skill.mastery_level}
               </div>
-            )}
+            ))}
           </div>
         )}
+
       </div>
     </div>
   );

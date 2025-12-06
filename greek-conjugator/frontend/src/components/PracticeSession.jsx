@@ -128,15 +128,10 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
       const session = await verbsService.startPracticeSession(sessionType, difficulty, 20);
       setSessionData(session);
 
-      // Load conjugations for all verbs in the session
-      const conjPromises = session.verbs.map(verb =>
-        verbsService.getConjugations(verb.id)
-      );
-      const allConjugations = await Promise.all(conjPromises);
-
+      // Conjugations are now included in the session response - no extra API calls needed!
       const conjugationsMap = {};
-      session.verbs.forEach((verb, index) => {
-        conjugationsMap[verb.id] = allConjugations[index];
+      session.verbs.forEach((verb) => {
+        conjugationsMap[verb.id] = verb.conjugations || [];
       });
       setConjugations(conjugationsMap);
 
@@ -285,31 +280,52 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     }
   };
 
-  // Generate smart practice question
-  const generateSmartQuestion = async () => {
+  // Generate smart practice question (client-side - no API call needed!)
+  const generateSmartQuestion = () => {
     if (!sessionData || !sessionData.verbs[currentQuestionIndex]) return null;
 
     const verb = sessionData.verbs[currentQuestionIndex];
+    const verbConjugations = conjugations[verb.id] || [];
     
-    try {
-      const questionType = practiceMode === 'smart' ? 
-        (Math.random() > 0.5 ? 'multiple_choice' : 'conjugation') : 
-        practiceMode;
-        
-      const response = await verbsService.generatePracticeQuestion(
-        sessionData.session_id,
-        verb.id,
-        questionType
-      );
+    if (verbConjugations.length === 0) return null;
+    
+    const questionType = practiceMode === 'smart' ? 
+      (Math.random() > 0.5 ? 'multiple_choice' : 'conjugation') : 
+      practiceMode;
+    
+    // Pick a random conjugation
+    const targetConjugation = verbConjugations[Math.floor(Math.random() * verbConjugations.length)];
+    
+    // Generate multiple choice options if needed
+    let options = null;
+    if (questionType === 'multiple_choice') {
+      const correctAnswer = targetConjugation.form;
+      const otherForms = verbConjugations
+        .map(c => c.form)
+        .filter(f => f && f !== correctAnswer && f !== '-')
+        .filter((v, i, a) => a.indexOf(v) === i); // unique
       
-      setSmartQuestion(response);
-      setSelectedMultipleChoice(null);
-      return response;
-    } catch (error) {
-      console.error('Failed to generate smart question:', error);
-      // Fallback to regular question
-      return getCurrentQuestion();
+      // Shuffle and take 3 wrong options
+      const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
+      options = [correctAnswer, ...shuffled].sort(() => Math.random() - 0.5);
     }
+    
+    const question = {
+      type: questionType,
+      verb: verb,
+      conjugation: targetConjugation,
+      tense: targetConjugation.tense,
+      mood: targetConjugation.mood,
+      voice: targetConjugation.voice,
+      number: targetConjugation.number,
+      correct_answer: targetConjugation.form,
+      translation: verb.english,
+      options: options
+    };
+    
+    setSmartQuestion(question);
+    setSelectedMultipleChoice(null);
+    return question;
   };
 
   // Handle multiple choice selection
@@ -405,19 +421,12 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
   // Generate smart question when practice mode changes or new question is needed
   useEffect(() => {
-    const loadSmartQuestion = async () => {
-      if (!sessionData || (practiceMode !== 'smart' && practiceMode !== 'multiple_choice')) return;
-      if (showResult) return; // Don't generate new question if showing result
-
-      try {
-        await generateSmartQuestion();
-      } catch (error) {
-        console.error('Failed to load smart question:', error);
-      }
-    };
-
-    loadSmartQuestion();
-  }, [sessionData, practiceMode, currentQuestionIndex]);
+    if (!sessionData || (practiceMode !== 'smart' && practiceMode !== 'multiple_choice')) return;
+    if (showResult) return; // Don't generate new question if showing result
+    
+    // Generate question client-side (instant, no API call)
+    generateSmartQuestion();
+  }, [sessionData, practiceMode, currentQuestionIndex, conjugations]);
 
   const question = getCurrentQuestion();
 

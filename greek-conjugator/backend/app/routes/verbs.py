@@ -101,9 +101,27 @@ def start_practice_session():
         db.session.add(practice_session)
         db.session.commit()
         
+        # Pre-load all conjugations for the selected verbs (eliminates N+1 API calls)
+        verb_ids = [verb.id for verb in verbs]
+        all_conjugations = Conjugation.query.filter(Conjugation.verb_id.in_(verb_ids)).all()
+        
+        # Group conjugations by verb_id
+        conjugations_map = {}
+        for conj in all_conjugations:
+            if conj.verb_id not in conjugations_map:
+                conjugations_map[conj.verb_id] = []
+            conjugations_map[conj.verb_id].append(conj.to_dict())
+        
+        # Build verb data with conjugations included
+        verbs_with_conjugations = []
+        for verb in verbs:
+            verb_data = verb.to_dict()
+            verb_data['conjugations'] = conjugations_map.get(verb.id, [])
+            verbs_with_conjugations.append(verb_data)
+        
         return jsonify({
             'session_id': practice_session.id,
-            'verbs': [verb.to_dict() for verb in verbs],
+            'verbs': verbs_with_conjugations,
             'session_type': session_type
         })
     except Exception as e:
