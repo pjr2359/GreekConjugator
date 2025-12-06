@@ -292,6 +292,19 @@ export const skillsService = {
   }
 };
 
+// Dashboard service - comprehensive learning metrics
+export const dashboardService = {
+  async getComprehensiveStats() {
+    try {
+      const response = await api.get('/dashboard/comprehensive');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch dashboard:', error);
+      return null;
+    }
+  }
+};
+
 // Text validation service
 export const textValidationService = {
   async validate(text) {
