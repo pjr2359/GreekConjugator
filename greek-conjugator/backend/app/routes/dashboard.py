@@ -99,22 +99,15 @@ def get_comprehensive_stats():
         
         mastery_breakdown = {row[0]: {"count": row[1], "avg_ease": round(row[2] or 2.5, 2)} for row in vocab_mastery}
         
-        # Calculate vocabulary categories
-        words_active = sum(m["count"] for level, m in mastery_breakdown.items() if level >= 3)  # Mastery 3+ = active
-        words_learning = sum(m["count"] for level, m in mastery_breakdown.items() if 1 <= level < 3)
-        words_new = mastery_breakdown.get(0, {}).get("count", 0)
-        total_words_known = sum(m["count"] for m in mastery_breakdown.values())
+        # Calculate vocabulary categories (new structure)
+        words_mastered = sum(m["count"] for level, m in mastery_breakdown.items() if level >= 3)  # Mastery 3+ = mastered
+        words_known = sum(m["count"] for level, m in mastery_breakdown.items() if level == 2)  # Mastery 2 = known
+        words_new = sum(m["count"] for level, m in mastery_breakdown.items() if level == 1)  # Mastery 1 = new/learning
+        words_unseen = mastery_breakdown.get(0, {}).get("count", 0)  # Mastery 0 = never reviewed
+        total_words_studied = sum(m["count"] for m in mastery_breakdown.values())
         
-        # Words at risk (due in next 24 hours with low ease factor)
-        words_at_risk = db.session.execute(
-            db.text("""
-                SELECT COUNT(*) FROM user_vocabulary_progress 
-                WHERE user_id = :user_id 
-                  AND next_review <= :tomorrow
-                  AND ease_factor < 2.0
-            """),
-            {"user_id": user_id, "tomorrow": now + timedelta(hours=24)}
-        ).fetchone()[0]
+        # Words that count toward Greek coverage (level 2+)
+        words_for_coverage = words_mastered + words_known
         
         # Words due now
         words_due = db.session.execute(
@@ -181,11 +174,8 @@ def get_comprehensive_stats():
             db.text("""
                 SELECT 
                     ucs.category,
-                    csd.name,
+                    csd.display_name,
                     csd.tier,
-                    csd.tense,
-                    csd.mood,
-                    csd.voice,
                     ucs.attempts,
                     ucs.correct,
                     ucs.mastery_level
@@ -202,13 +192,13 @@ def get_comprehensive_stats():
         total_skill_correct = 0
         
         for skill in skills:
-            category, name, tier, tense, mood, voice, attempts, correct, mastery = skill
+            category, name, tier, attempts, correct, mastery = skill
             
-            # Group by domain (tense or special category)
-            domain = tense if tense else "special"
+            # Group by tier
+            domain = f"tier_{tier}"
             if domain not in skill_domains:
                 skill_domains[domain] = {
-                    "name": domain.title() if domain != "special" else "Special Forms",
+                    "name": f"Tier {tier}",
                     "skills": [],
                     "total_mastery": 0,
                     "max_mastery": 0
@@ -234,14 +224,15 @@ def get_comprehensive_stats():
                 if domain["max_mastery"] > 0 else 0, 1
             )
         
-        skills_mastered = sum(1 for s in skills if s[8] >= 5)  # mastery_level index
-        skills_proficient = sum(1 for s in skills if s[8] >= 3)
+        skills_mastered = sum(1 for s in skills if s[5] >= 5)  # mastery_level is now index 5
+        skills_proficient = sum(1 for s in skills if s[5] >= 3)
         total_skills = len(skills) if skills else 11  # Default to 11 if no skills yet
         
         # Weak skills (< 70% accuracy with 5+ attempts)
+        # Indices: 0=category, 1=name, 2=tier, 3=attempts, 4=correct, 5=mastery
         weak_skills = [
-            {"category": s[0], "name": s[1], "accuracy": round((s[7] / s[6] * 100) if s[6] > 0 else 0, 1)}
-            for s in skills if s[6] >= 5 and (s[7] / s[6] * 100) < 70
+            {"category": s[0], "name": s[1], "accuracy": round((s[4] / s[3] * 100) if s[3] > 0 else 0, 1)}
+            for s in skills if s[3] >= 5 and (s[4] / s[3] * 100) < 70
         ]
         
         grammar_accuracy = round((total_skill_correct / total_skill_attempts * 100) if total_skill_attempts > 0 else 0, 1)
@@ -252,18 +243,18 @@ def get_comprehensive_stats():
         
         # Weighted competency score (0-100)
         # 40% vocabulary coverage, 30% grammar mastery, 20% accuracy, 10% stability
-        vocab_score = min(total_words_known / 20, 40)  # Max 40 points at 800 words
+        vocab_score = min(words_for_coverage / 20, 40)  # Max 40 points at 800 words (level 2+)
         grammar_score = (skills_proficient / max(total_skills, 1)) * 30  # Max 30 points
         accuracy_score = ((vocab_accuracy + grammar_accuracy) / 2) * 0.2  # Max 20 points
         stability_score = min(words_stabilized / 10, 10)  # Max 10 points at 100 stable words
         
         competency_score = round(vocab_score + grammar_score + accuracy_score + stability_score, 1)
         
-        # Coverage estimate
-        coverage_percent = get_greek_coverage_estimate(total_words_known)
+        # Coverage estimate (based on level 2+ words only)
+        coverage_percent = get_greek_coverage_estimate(words_for_coverage)
         
-        # Vocabulary tier
-        tier_info = get_vocabulary_tier(total_words_known)
+        # Vocabulary tier (based on level 2+ words)
+        tier_info = get_vocabulary_tier(words_for_coverage)
         
         # ====================================================================
         # DAILY QUESTS
@@ -315,18 +306,7 @@ def get_comprehensive_stats():
         
         recommendations = []
         
-        # Priority 1: Words at risk
-        if words_at_risk > 5:
-            recommendations.append({
-                "priority": 1,
-                "type": "urgent",
-                "title": f"{words_at_risk} words at risk of being forgotten",
-                "action": "Review these words now to reinforce your memory",
-                "button": "Review At-Risk Words",
-                "route": "vocabulary"
-            })
-        
-        # Priority 2: Due reviews
+        # Priority 1: Due reviews
         if words_due > 10:
             recommendations.append({
                 "priority": 2,
@@ -392,13 +372,14 @@ def get_comprehensive_stats():
         return jsonify({
             # Vocabulary
             "vocabulary": {
-                "total_known": total_words_known,
-                "active": words_active,
-                "learning": words_learning,
-                "new": words_new,
-                "stabilized": words_stabilized,
-                "at_risk": words_at_risk,
+                "total_studied": total_words_studied,
+                "mastered": words_mastered,  # Level 3+
+                "known": words_known,  # Level 2
+                "new": words_new,  # Level 1
+                "unseen": words_unseen,  # Level 0
+                "for_coverage": words_for_coverage,  # Level 2+ (used for Greek %)
                 "due": words_due,
+                "stabilized": words_stabilized,
                 "new_available": new_available,
                 "today_learned": today_new,
                 "accuracy": vocab_accuracy,
@@ -443,4 +424,5 @@ def get_comprehensive_stats():
         import traceback
         traceback.print_exc()
         return jsonify({'error': 'Failed to fetch dashboard data'}), 500
+
 

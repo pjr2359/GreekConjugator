@@ -24,6 +24,7 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
   
   // Stats state
   const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0, streak: 0, maxStreak: 0 });
   const [categories, setCategories] = useState({ categories: {}, word_types: {} });
   
@@ -39,11 +40,14 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
   }, []);
 
   const loadStats = async () => {
+    setStatsLoading(true);
     try {
       const data = await vocabularyService.getStats();
       setStats(data);
     } catch (error) {
       console.error('Failed to load stats:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -298,22 +302,35 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
             {/* Today's Stats */}
             <div className="grid grid-cols-3 divide-x divide-slate-700 border-b border-slate-700">
               <div className="p-4 text-center">
-                <div className="text-3xl font-bold text-blue-400">{dueCount}</div>
+                <div className="text-3xl font-bold text-blue-400">
+                  {statsLoading ? '...' : dueCount}
+                </div>
                 <div className="text-xs text-slate-400 uppercase tracking-wide">Due</div>
               </div>
               <div className="p-4 text-center">
-                <div className="text-3xl font-bold text-emerald-400">{Math.min(newRemaining, stats?.new_available || 0)}</div>
+                <div className="text-3xl font-bold text-emerald-400">
+                  {statsLoading ? '...' : Math.min(newRemaining, stats?.new_available || 0)}
+                </div>
                 <div className="text-xs text-slate-400 uppercase tracking-wide">New</div>
               </div>
               <div className="p-4 text-center">
-                <div className="text-3xl font-bold text-white">{totalCards}</div>
+                <div className="text-3xl font-bold text-white">
+                  {statsLoading ? '...' : totalCards}
+                </div>
                 <div className="text-xs text-slate-400 uppercase tracking-wide">Total</div>
               </div>
             </div>
             
             {/* Study Now Button */}
             <div className="p-6">
-              {totalCards > 0 ? (
+              {statsLoading ? (
+                <div className="text-center py-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+                    <span className="text-slate-400">Loading...</span>
+                  </div>
+                </div>
+              ) : totalCards > 0 ? (
                 <button
                   onClick={startSmartPractice}
                   disabled={loading}

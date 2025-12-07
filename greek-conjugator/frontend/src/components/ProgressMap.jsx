@@ -361,3 +361,4 @@ const ProgressMap = ({ user, onBackToHome, onStartPractice }) => {
 
 export default ProgressMap;
 
+
