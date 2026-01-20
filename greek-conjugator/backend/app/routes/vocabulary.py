@@ -346,16 +346,28 @@ def get_vocab_stats():
         daily_new_limit = 10  # Default, could be user preference
         
         # Count new words available (not yet practiced)
+        # For new users with 0 mastered words, ensure they always see at least the top 100 words
+        unlocked_limit = max(level_info['unlocked_words'], 100) if level_info['mastered_count'] == 0 else level_info['unlocked_words']
+        
         new_available = db.session.execute(
             db.text("""
                 SELECT COUNT(*) FROM common_words 
-                WHERE frequency_rank <= :unlocked
+                WHERE (frequency_rank <= :unlocked OR frequency_rank IS NULL)
                   AND id NOT IN (
                     SELECT word_id FROM user_vocabulary_progress WHERE user_id = :user_id
                   )
+                LIMIT 100
             """),
-            {"user_id": user_id, "unlocked": level_info['unlocked_words']}
+            {"user_id": user_id, "unlocked": unlocked_limit}
         ).fetchone()[0]
+        
+        # Ensure new users always see at least 10 new words available
+        if level_info['mastered_count'] == 0 and new_available < 10:
+            # Count total words in database
+            total_available = db.session.execute(
+                db.text("SELECT COUNT(*) FROM common_words")
+            ).fetchone()[0]
+            new_available = min(total_available, 10)
         
         return jsonify({
             'total_words': total_words,
@@ -426,18 +438,22 @@ def smart_practice():
         
         # 2. Then, add new words if we haven't hit daily limit
         if new_words_remaining > 0:
+            # For new users, ensure they can access words even if frequency_rank is NULL
+            # Use a minimum unlocked count of 100 for brand new users
+            effective_unlocked = max(unlocked_words, 100) if get_user_vocab_level(user_id)['mastered_count'] == 0 else unlocked_words
+            
             new_query = """
                 SELECT *, 'new' as card_type FROM common_words 
-                WHERE frequency_rank <= :unlocked
+                WHERE (frequency_rank <= :unlocked OR frequency_rank IS NULL)
                   AND id NOT IN (
                     SELECT word_id FROM user_vocabulary_progress WHERE user_id = :user_id
                   )
-                ORDER BY frequency_rank ASC
+                ORDER BY COALESCE(frequency_rank, 999999) ASC
                 LIMIT :limit
             """
             new_result = db.session.execute(
                 db.text(new_query),
-                {"user_id": user_id, "unlocked": unlocked_words, "limit": new_words_remaining}
+                {"user_id": user_id, "unlocked": effective_unlocked, "limit": new_words_remaining}
             ).fetchall()
             words.extend([dict(row._mapping) for row in new_result])
         

@@ -27,12 +27,12 @@ const GrammarTerm = ({ term }) => {
   if (!term) return null;
   const key = term.toLowerCase();
   const info = grammarTerms[key];
-  
+
   // Capitalize for display
   const displayTerm = term.charAt(0).toUpperCase() + term.slice(1);
-  
+
   if (!info) return <span className="font-medium">{displayTerm}</span>;
-  
+
   return (
     <span className="relative group inline-block">
       <span className="font-medium underline decoration-dotted decoration-purple-400/70 cursor-help">
@@ -68,7 +68,7 @@ const inferPersonFromEnding = (form) => {
 // Parse and render conjugation prompt with tooltips
 const ConjugationPrompt = ({ tense, mood, voice, number, form }) => {
   const person = inferPersonFromEnding(form);
-  
+
   return (
     <span className="text-white/90 flex flex-wrap justify-center gap-2">
       {tense && <GrammarTerm term={tense} />}
@@ -99,20 +99,20 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   const [showHints, setShowHints] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isEndlessMode, setIsEndlessMode] = useState(true); // Default to endless mode
-  // New smart practice features
-  const [practiceMode, setPracticeMode] = useState('conjugation'); // 'conjugation', 'multiple_choice', 'smart', 'flashcard'
-  const [answerMode, setAnswerMode] = useState('multiple_choice'); // 'multiple_choice', 'type', 'flashcard'
+  // New smart practice features - Multiple choice only
+  const [practiceMode, setPracticeMode] = useState('multiple_choice'); // Force multiple choice only
+  const [answerMode, setAnswerMode] = useState('multiple_choice'); // Force multiple choice only
   const [smartQuestion, setSmartQuestion] = useState(null);
   const [selectedMultipleChoice, setSelectedMultipleChoice] = useState(null);
   const [flashcardRevealed, setFlashcardRevealed] = useState(false);
-  
+
   // Gamification state
   const [skillStats, setSkillStats] = useState(null);
   const [xpGained, setXpGained] = useState(0);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
   const [levelUp, setLevelUp] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
-  
+
   const [practiceStats, setPracticeStats] = useState({
     totalQuestions: 0,
     correctAnswers: 0,
@@ -286,16 +286,16 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
     const verb = sessionData.verbs[currentQuestionIndex];
     const verbConjugations = conjugations[verb.id] || [];
-    
+
     if (verbConjugations.length === 0) return null;
-    
-    const questionType = practiceMode === 'smart' ? 
-      (Math.random() > 0.5 ? 'multiple_choice' : 'conjugation') : 
+
+    const questionType = practiceMode === 'smart' ?
+      (Math.random() > 0.5 ? 'multiple_choice' : 'conjugation') :
       practiceMode;
-    
+
     // Pick a random conjugation
     const targetConjugation = verbConjugations[Math.floor(Math.random() * verbConjugations.length)];
-    
+
     // Generate multiple choice options if needed
     let options = null;
     if (questionType === 'multiple_choice') {
@@ -304,12 +304,12 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
         .map(c => c.form)
         .filter(f => f && f !== correctAnswer && f !== '-')
         .filter((v, i, a) => a.indexOf(v) === i); // unique
-      
+
       // Shuffle and take 3 wrong options
       const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
       options = [correctAnswer, ...shuffled].sort(() => Math.random() - 0.5);
     }
-    
+
     const question = {
       type: questionType,
       verb: verb,
@@ -322,7 +322,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
       translation: verb.english,
       options: options
     };
-    
+
     setSmartQuestion(question);
     setSelectedMultipleChoice(null);
     return question;
@@ -340,10 +340,10 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
     setLoading(true);
     try {
-      const userInput = practiceMode === 'multiple_choice' || smartQuestion.type === 'multiple_choice' 
-        ? selectedMultipleChoice 
+      const userInput = practiceMode === 'multiple_choice' || smartQuestion.type === 'multiple_choice'
+        ? selectedMultipleChoice
         : userAnswer;
-        
+
       if (!userInput) {
         setLoading(false);
         return;
@@ -352,7 +352,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
       const correct = userInput === smartQuestion.correct_answer;
       setIsCorrect(correct);
       setShowResult(true);
-      
+
       // XP animation for correct answer
       if (correct) {
         const bonusXp = practiceStats.streak >= 5 ? 5 : 0; // Streak bonus
@@ -405,7 +405,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   };
 
   // Don't auto-start - wait for user to click Start Practice
-  
+
   // Load skill stats on mount
   useEffect(() => {
     const loadSkillStats = async () => {
@@ -423,7 +423,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   useEffect(() => {
     if (!sessionData || (practiceMode !== 'smart' && practiceMode !== 'multiple_choice')) return;
     if (showResult) return; // Don't generate new question if showing result
-    
+
     // Generate question client-side (instant, no API call)
     generateSmartQuestion();
   }, [sessionData, practiceMode, currentQuestionIndex, conjugations]);
@@ -461,9 +461,9 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     const xpInCurrentLevel = totalXp % 100;
     return { level, xp: xpInCurrentLevel, xpToNext: 100, totalXp };
   };
-  
+
   const overallLevel = calculateOverallLevel();
-  
+
   // Get mastery level name
   const getMasteryName = (level) => {
     const names = ['Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Expert'];
@@ -489,7 +489,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
               {skillCategory ? 'Skill Practice' : 'Conjugation Practice'}
             </p>
           </div>
-          
+
           <div className="p-6">
             {/* XP Progress Bar */}
             <div className="mb-6">
@@ -498,7 +498,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 <span className="text-amber-400 text-sm font-medium">{overallLevel.xp} / {overallLevel.xpToNext} XP</span>
               </div>
               <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-500"
                   style={{ width: `${(overallLevel.xp / overallLevel.xpToNext) * 100}%` }}
                 />
@@ -528,7 +528,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 <div className="text-xs text-slate-400">{skillStats?.current_streak || 0} Streak</div>
               </div>
             </div>
-            
+
             {/* Current Mastery Level */}
             <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-xl p-4 mb-6 border border-purple-500/30">
               <div className="flex items-center justify-between">
@@ -541,72 +541,40 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Answer Mode Selection */}
             <div className="mb-6">
               <label className="block text-slate-400 text-sm mb-3">Answer Mode</label>
               <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => setAnswerMode('multiple_choice')}
-                  className={`p-3 rounded-xl border transition-all text-center ${
-                    answerMode === 'multiple_choice'
-                      ? 'border-purple-500 bg-purple-500/20 text-white'
-                      : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                  }`}
-                >
-                  <div className="text-xl mb-1">🔘</div>
-                  <div className="text-xs">Multiple<br/>Choice</div>
-                </button>
-                <button
-                  onClick={() => setAnswerMode('type')}
-                  className={`p-3 rounded-xl border transition-all text-center ${
-                    answerMode === 'type'
-                      ? 'border-purple-500 bg-purple-500/20 text-white'
-                      : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                  }`}
-                >
-                  <div className="text-xl mb-1">⌨️</div>
-                  <div className="text-xs">Type<br/>Answer</div>
-                </button>
-                <button
-                  onClick={() => setAnswerMode('flashcard')}
-                  className={`p-3 rounded-xl border transition-all text-center ${
-                    answerMode === 'flashcard'
-                      ? 'border-purple-500 bg-purple-500/20 text-white'
-                      : 'border-slate-600 text-slate-400 hover:border-slate-500'
-                  }`}
-                >
-                  <div className="text-xl mb-1">🃏</div>
-                  <div className="text-xs">Flashcard<br/>Self-Grade</div>
-                </button>
+                <div className="mb-4 p-4 bg-purple-500/20 rounded-xl border border-purple-500/50 text-center">
+                  <div className="text-2xl mb-2">🔘</div>
+                  <div className="text-sm text-white font-medium">Multiple Choice Mode</div>
+                  <div className="text-xs text-slate-400 mt-1">Pick the correct conjugation from options</div>
+                </div>
               </div>
-              <p className="text-slate-500 text-xs mt-2 text-center">
-                {answerMode === 'multiple_choice' && 'Pick the correct conjugation from options'}
-                {answerMode === 'type' && 'Type the conjugation in Greek'}
-                {answerMode === 'flashcard' && 'Think of answer, then reveal and self-grade'}
-              </p>
-            </div>
-            
-            <button
-              onClick={() => {
-                setPracticeMode(answerMode);
-                setFlashcardRevealed(false);
-                startSession();
-              }}
-              className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
-                hover:from-purple-600 hover:to-pink-600 transition-all text-lg mb-3"
-            >
-              ▶️ Start Practice
-            </button>
-            
-            {onBackToHome && (
+
               <button
-                onClick={onBackToHome}
-                className="w-full py-3 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 transition-colors"
+                onClick={() => {
+                  setPracticeMode('multiple_choice'); // Force multiple choice
+                  setAnswerMode('multiple_choice'); // Force multiple choice
+                  setFlashcardRevealed(false);
+                  startSession();
+                }}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                hover:from-purple-600 hover:to-pink-600 transition-all text-lg mb-3"
               >
-                ← Back to Home
+                ▶️ Start Practice
               </button>
-            )}
+
+              {onBackToHome && (
+                <button
+                  onClick={onBackToHome}
+                  className="w-full py-3 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 transition-colors"
+                >
+                  ← Back to Home
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -676,7 +644,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
   // Calculate session XP
   const sessionXp = (practiceStats.correctAnswers * 10) + (practiceStats.totalQuestions * 2);
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       {/* XP Animation Overlay */}
@@ -687,7 +655,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
           </div>
         </div>
       )}
-      
+
       {/* Level Up Overlay */}
       {levelUp && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -695,7 +663,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
             <div className="text-6xl mb-4">🎊</div>
             <h2 className="text-3xl font-bold text-amber-900 mb-2">LEVEL UP!</h2>
             <p className="text-amber-800">You reached Level {overallLevel.level + 1}!</p>
-            <button 
+            <button
               onClick={() => setLevelUp(false)}
               className="mt-4 px-6 py-2 bg-amber-900 text-amber-100 rounded-lg"
             >
@@ -704,7 +672,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
           </div>
         </div>
       )}
-      
+
       <div className="max-w-2xl mx-auto">
         <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
           {/* Progress Header */}
@@ -742,7 +710,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
             </div>
             {/* Mini XP Progress */}
             <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-300"
                 style={{ width: `${((overallLevel.xp + sessionXp) % 100)}%` }}
               />
@@ -750,41 +718,10 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
           </div>
 
           <div className="p-6">
-            {/* Practice Mode Selector */}
-            <div className="mb-6 p-4 bg-slate-700/50 rounded-xl">
-              <h3 className="font-semibold text-slate-300 mb-3 text-sm">Practice Mode</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setPracticeMode('conjugation')}
-                  className={`py-2 px-4 rounded-lg transition-colors text-sm ${
-                    practiceMode === 'conjugation'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
-                  }`}
-          >
-            ✍️ Type Answer
-          </button>
-          <button
-            onClick={() => setPracticeMode('multiple_choice')}
-            className={`py-2 px-4 rounded-lg transition-colors text-sm ${
-              practiceMode === 'multiple_choice'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
-            }`}
-          >
-            📝 Multiple Choice
-          </button>
-          <button
-            onClick={() => setPracticeMode('smart')}
-            className={`py-2 px-4 rounded-lg transition-colors text-sm ${
-              practiceMode === 'smart'
-                ? 'bg-pink-600 text-white'
-                : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
-            }`}
-          >
-            🧠 Smart Mix
-          </button>
-              </div>
+            {/* Practice Mode Info - Multiple Choice Only */}
+            <div className="mb-6 p-4 bg-emerald-600/20 rounded-xl border border-emerald-500/50">
+              <h3 className="font-semibold text-emerald-400 mb-1 text-sm">📝 Multiple Choice Practice</h3>
+              <p className="text-xs text-slate-400">Select the correct conjugation from the options provided</p>
             </div>
 
             {/* Real-time practice statistics */}
@@ -838,7 +775,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                     <p className="text-white/70 mt-1">"{smartQuestion.translation}"</p>
                   </div>
                   <div className="text-center text-sm bg-white/10 rounded-lg p-3">
-                    <ConjugationPrompt 
+                    <ConjugationPrompt
                       tense={smartQuestion.tense || 'present'}
                       mood={smartQuestion.mood || 'indicative'}
                       voice={smartQuestion.voice}
@@ -852,11 +789,9 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                   )}
                 </div>
               ) : (
-                // Regular Practice Question
+                // Regular Practice Question (Multiple Choice Only)
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
-                  <div className="text-white/80 text-sm mb-2">
-                    {answerMode === 'multiple_choice' ? '📝 Which form matches?' : '✍️ Type the conjugation'}
-                  </div>
+                  <div className="text-white/80 text-sm mb-2">📝 Which form matches?</div>
                   <div className="text-center mb-4">
                     <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
                       {question.verb.infinitive}
@@ -865,7 +800,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                   </div>
                   <div className="text-center text-sm bg-white/10 rounded-lg p-3">
                     <p className="text-white/80 mb-2">Find the form that is:</p>
-                    <ConjugationPrompt 
+                    <ConjugationPrompt
                       tense={question.conjugation.tense}
                       mood={question.conjugation.mood}
                       voice={question.conjugation.voice}
@@ -878,202 +813,90 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
               )}
             </div>
 
-            {/* Answer input */}
+            {/* Answer input - Multiple Choice Only */}
             {!showResult ? (
+              <div className="mb-6 space-y-3">
+                {(() => {
+                  const verbConjs = smartQuestion
+                    ? conjugations[smartQuestion.verb.id] || []
+                    : conjugations[question.verb.id] || [];
+                  const correctForm = smartQuestion ? smartQuestion.correct_answer : question.conjugation.form;
+                  const otherForms = verbConjs
+                    .map(c => c.form)
+                    .filter(f => f && f !== correctForm && f !== '-')
+                    .filter((v, i, a) => a.indexOf(v) === i);
+                  const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
+                  return [correctForm, ...shuffled].sort(() => Math.random() - 0.5);
+                })().map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleMultipleChoiceSelect(option)}
+                    className={`w-full p-4 text-left rounded-xl border-2 transition-all ${selectedMultipleChoice === option
+                        ? 'border-purple-500 bg-purple-500/20 text-white'
+                        : 'border-slate-600 bg-slate-700/50 text-slate-200 hover:border-slate-500'
+                      }`}
+                    style={{ fontFamily: 'Georgia, serif' }}
+                  >
+                    <span className="text-lg">{option}</span>
+                  </button>
+                ))}
+
+                <button
+                  onClick={submitSmartAnswer}
+                  disabled={!selectedMultipleChoice || loading}
+                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                        hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {loading ? 'Checking...' : 'Submit Answer'}
+                </button>
+              </div>
+            ) : (
+              /* Enhanced result display */
               <div className="mb-6">
-                {/* Flashcard Mode */}
-                {answerMode === 'flashcard' ? (
-                  <div className="text-center">
-                    {!flashcardRevealed ? (
-                      <>
-                        <p className="text-slate-400 mb-4">Think of the answer, then reveal to check</p>
-                        <button
-                          onClick={() => setFlashcardRevealed(true)}
-                          className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
-                            hover:from-purple-600 hover:to-pink-600 transition-all text-lg"
-                        >
-                          👁️ Reveal Answer
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-slate-700/50 rounded-xl p-6 mb-4">
-                          <p className="text-slate-400 text-sm mb-2">Correct Answer:</p>
-                          <p className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
-                            {question.conjugation.form}
+                <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border`}>
+                  <div className="flex items-center mb-3">
+                    <span className="text-2xl mr-2">{isCorrect ? '✅' : '❌'}</span>
+                    <span className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                      {validationResult?.feedback || (isCorrect ? 'Correct!' : 'Incorrect')}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p><strong>Your answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{userAnswer}</span></p>
+                    {!isCorrect && (
+                      <p><strong>Correct answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{question.conjugation.form}</span></p>
+                    )}
+
+                    {/* Show similarity score and suggestions from enhanced validation */}
+                    {validationResult && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        {validationResult.similarity_score !== undefined && (
+                          <p className="text-sm text-gray-600">
+                            <strong>Similarity:</strong> {Math.round(validationResult.similarity_score * 100)}%
                           </p>
-                        </div>
-                        <p className="text-slate-400 mb-4">Did you get it right?</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            onClick={() => {
-                              setIsCorrect(false);
-                              setShowResult(true);
-                              setFlashcardRevealed(false);
-                              setPracticeStats(prev => ({
-                                ...prev,
-                                totalQuestions: prev.totalQuestions + 1,
-                                streak: 0,
-                                accuracy: Math.round((prev.correctAnswers / (prev.totalQuestions + 1)) * 100)
-                              }));
-                            }}
-                            className="py-4 bg-red-500/20 border border-red-500 text-red-400 font-bold rounded-xl hover:bg-red-500/30 transition-all"
-                          >
-                            ❌ Wrong
-                          </button>
-                          <button
-                            onClick={() => {
-                              setIsCorrect(true);
-                              setShowResult(true);
-                              setFlashcardRevealed(false);
-                              // XP animation for correct answer
-                              setXpGained(10);
-                              setShowXpAnimation(true);
-                              setTimeout(() => setShowXpAnimation(false), 1500);
-                              setPracticeStats(prev => ({
-                                ...prev,
-                                totalQuestions: prev.totalQuestions + 1,
-                                correctAnswers: prev.correctAnswers + 1,
-                                streak: prev.streak + 1,
-                                maxStreak: Math.max(prev.maxStreak, prev.streak + 1),
-                                accuracy: Math.round(((prev.correctAnswers + 1) / (prev.totalQuestions + 1)) * 100)
-                              }));
-                            }}
-                            className="py-4 bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold rounded-xl hover:bg-emerald-500/30 transition-all"
-                          >
-                            ✓ Correct (+10 XP)
-                          </button>
-                        </div>
-                      </>
+                        )}
+                        {validationResult.suggestions && validationResult.suggestions.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-gray-600"><strong>Suggestions:</strong></p>
+                            <ul className="text-sm text-gray-600 ml-4">
+                              {validationResult.suggestions.map((suggestion, index) => (
+                                <li key={index}>• {suggestion}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                ) : answerMode === 'multiple_choice' || (smartQuestion && smartQuestion.type === 'multiple_choice') ? (
-                  // Multiple Choice Options - generate from same verb's conjugations
-                  <div className="space-y-3">
-                    {(() => {
-                      // Get options from smart question or generate from verb's conjugations
-                      if (smartQuestion?.options) return smartQuestion.options;
-                      
-                      // Generate options from the same verb's conjugations
-                      const verbConjs = conjugations[question.verb.id] || [];
-                      const correctForm = question.conjugation.form;
-                      
-                      // Get other forms from the same verb as wrong options
-                      const otherForms = verbConjs
-                        .map(c => c.form)
-                        .filter(f => f && f !== correctForm && f !== '-')
-                        .filter((v, i, a) => a.indexOf(v) === i); // unique
-                      
-                      // Shuffle and take 3 wrong options
-                      const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
-                      
-                      // Combine with correct answer and shuffle
-                      return [correctForm, ...shuffled].sort(() => Math.random() - 0.5);
-                    })().map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleMultipleChoiceSelect(option)}
-                        className={`w-full p-4 text-left rounded-xl border-2 transition-all ${
-                          selectedMultipleChoice === option
-                            ? 'border-purple-500 bg-purple-500/20 text-white'
-                            : 'border-slate-600 bg-slate-700/50 text-slate-200 hover:border-slate-500'
-                        }`}
-                        style={{ fontFamily: 'Georgia, serif' }}
-                      >
-                        <span className="text-lg">{option}</span>
-                      </button>
-                    ))}
-                    
-                    <button
-                      onClick={submitSmartAnswer}
-                      disabled={!selectedMultipleChoice || loading}
-                      className="w-full mt-4 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
-                        hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      {loading ? 'Checking...' : 'Submit Answer'}
-                    </button>
-                  </div>
-                ) : (
-            // Type Answer Mode
-            <div>
-              <GreekKeyboard
-                value={userAnswer}
-                onTextChange={setUserAnswer}
-                placeholder="Type the conjugation in Greek..."
-                showValidation={true}
-                correctAnswer={smartQuestion ? smartQuestion.correct_answer : question.conjugation.form}
-                autoTransliterate={true}
-              />
-
-              <button
-                onClick={smartQuestion ? submitSmartAnswer : submitAnswer}
-                disabled={!userAnswer.trim() || loading}
-                className="w-full mt-4 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
-                  hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {loading ? 'Checking...' : 'Submit Answer'}
-              </button>
-              
-              <p className="text-slate-500 text-xs text-center mt-2">
-                💡 Type in Latin (e.g., "grapho" → "γραφω") • Accents optional
-              </p>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Enhanced result display */
-        <div className="mb-6">
-          <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border`}>
-            <div className="flex items-center mb-3">
-              <span className="text-2xl mr-2">{isCorrect ? '✅' : '❌'}</span>
-              <span className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
-                {validationResult?.feedback || (isCorrect ? 'Correct!' : 'Incorrect')}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <p><strong>Your answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{userAnswer}</span></p>
-              {!isCorrect && (
-                <p><strong>Correct answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{question.conjugation.form}</span></p>
-              )}
-
-              {/* Show similarity score and suggestions from enhanced validation */}
-              {validationResult && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  {validationResult.similarity_score !== undefined && (
-                    <p className="text-sm text-gray-600">
-                      <strong>Similarity:</strong> {Math.round(validationResult.similarity_score * 100)}%
-                    </p>
-                  )}
-                  {validationResult.suggestions && validationResult.suggestions.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600"><strong>Suggestions:</strong></p>
-                      <ul className="text-sm text-gray-600 ml-4">
-                        {validationResult.suggestions.map((suggestion, index) => (
-                          <li key={index}>• {suggestion}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
-              )}
-            </div>
-          </div>
 
-          <button
-            onClick={nextQuestion}
-            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                <button
+                  onClick={nextQuestion}
+                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
               hover:from-purple-600 hover:to-pink-600 transition-all"
-          >
-            {isEndlessMode ? 'Next Question →' : 'Continue →'}
-          </button>
-        </div>
-      )}
-
-            {/* Hints - only show for typing mode */}
-            {answerMode === 'type' && (
-              <div className="text-sm text-slate-400 bg-slate-700/50 p-4 rounded-xl mt-6">
-                💡 <strong className="text-slate-300">Tip:</strong> Type in Latin characters (e.g., "grapho") for automatic Greek conversion.
+                >
+                  {isEndlessMode ? 'Next Question →' : 'Continue →'}
+                </button>
               </div>
             )}
           </div>
