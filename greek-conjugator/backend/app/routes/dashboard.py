@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, session
 from ..models import db
 from .auth import login_required
 from datetime import datetime, timedelta
+import math
 
 bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 
@@ -14,15 +15,15 @@ bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 # VOCABULARY TIERS - Based on real Greek language learning research
 # ============================================================================
 VOCABULARY_TIERS = [
-    {"threshold": 0, "name": "Beginner", "greek": "Αρχάριος", "description": "Just starting out", "unlock": None},
-    {"threshold": 100, "name": "Tourist", "greek": "Τουρίστας", "description": "Basic survival phrases", "unlock": "Café conversations"},
-    {"threshold": 250, "name": "Explorer", "greek": "Εξερευνητής", "description": "Can handle simple interactions", "unlock": "Market dialogues"},
-    {"threshold": 500, "name": "Conversant", "greek": "Συνομιλητής", "description": "Basic daily conversations", "unlock": "Story mode: A1"},
-    {"threshold": 1000, "name": "Competent", "greek": "Ικανός", "description": "Comfortable in everyday situations", "unlock": "Listening exercises"},
-    {"threshold": 1500, "name": "Proficient", "greek": "Επαρκής", "description": "Can discuss most topics", "unlock": "Story mode: A2"},
-    {"threshold": 2000, "name": "Advanced", "greek": "Προχωρημένος", "description": "Fluent in daily life", "unlock": "News articles"},
-    {"threshold": 3000, "name": "Expert", "greek": "Ειδικός", "description": "Near-native vocabulary", "unlock": "Literature excerpts"},
-    {"threshold": 5000, "name": "Master", "greek": "Μάστορας", "description": "Comprehensive vocabulary", "unlock": "Full library access"},
+    {"threshold": 0, "name": "Beginner", "greek": "Αρχάριος", "description": "Just starting out"},
+    {"threshold": 100, "name": "Tourist", "greek": "Τουρίστας", "description": "Basic survival phrases"},
+    {"threshold": 250, "name": "Explorer", "greek": "Εξερευνητής", "description": "Can handle simple interactions"},
+    {"threshold": 500, "name": "Conversant", "greek": "Συνομιλητής", "description": "Basic daily conversations"},
+    {"threshold": 1000, "name": "Competent", "greek": "Ικανός", "description": "Comfortable in everyday situations"},
+    {"threshold": 1500, "name": "Proficient", "greek": "Επαρκής", "description": "Can discuss most topics"},
+    {"threshold": 2000, "name": "Advanced", "greek": "Προχωρημένος", "description": "Fluent in daily life"},
+    {"threshold": 3000, "name": "Expert", "greek": "Ειδικός", "description": "Near-native vocabulary"},
+    {"threshold": 5000, "name": "Master", "greek": "Μάστορας", "description": "Comprehensive vocabulary"},
 ]
 
 
@@ -57,18 +58,87 @@ def get_vocabulary_tier(words_known):
 def get_greek_coverage_estimate(words_known):
     """
     Estimate what percentage of everyday Greek the user can understand.
-    Based on Zipf's law: most frequent words cover most of language use.
+    Modeled as a Zipf-like saturation curve with diminishing returns.
     """
-    # Rough estimates based on corpus linguistics research
-    if words_known >= 5000: return 98
-    if words_known >= 3000: return 95
-    if words_known >= 2000: return 90
-    if words_known >= 1500: return 85
-    if words_known >= 1000: return 80
-    if words_known >= 500: return 65
-    if words_known >= 250: return 50
-    if words_known >= 100: return 30
-    return min(words_known * 0.3, 30)
+    # Exponential saturation calibrated to:
+    # - 1000 words ≈ 85% coverage
+    # - 5000 words ≈ 98% coverage (asymptote)
+    words = max(words_known or 0, 0)
+    max_coverage = 98.0
+    k = -math.log(1 - (85.0 / max_coverage)) / 1000.0
+    coverage = max_coverage * (1 - math.exp(-k * words))
+    return round(min(max(coverage, 0), max_coverage), 1)
+
+
+def _validate_dashboard_payload(payload):
+    """Validate dashboard payload for internal consistency."""
+    errors = []
+
+    vocab = payload.get("vocabulary", {})
+    coverage = payload.get("coverage", {})
+    grammar = payload.get("grammar", {})
+
+    # Basic non-negative checks
+    non_negative_fields = [
+        "total_studied", "mastered", "known", "new", "unseen", "for_coverage",
+        "due", "stabilized", "new_available", "today_learned"
+    ]
+    for field in non_negative_fields:
+        value = vocab.get(field)
+        if value is not None and value < 0:
+            errors.append(f"vocabulary.{field} is negative ({value})")
+
+    # Total studied should match breakdown
+    total_studied = vocab.get("total_studied")
+    breakdown_sum = sum(
+        vocab.get(key, 0) for key in ("mastered", "known", "new", "unseen")
+    )
+    if total_studied is not None and total_studied != breakdown_sum:
+        errors.append(
+            f"vocabulary.total_studied ({total_studied}) != breakdown sum ({breakdown_sum})"
+        )
+
+    # for_coverage should equal mastered + known
+    for_coverage = vocab.get("for_coverage")
+    expected_for_coverage = (vocab.get("mastered", 0) + vocab.get("known", 0))
+    if for_coverage is not None and for_coverage != expected_for_coverage:
+        errors.append(
+            f"vocabulary.for_coverage ({for_coverage}) != mastered+known ({expected_for_coverage})"
+        )
+
+    # Due should not exceed total studied
+    due = vocab.get("due")
+    if due is not None and total_studied is not None and due > total_studied:
+        errors.append(
+            f"vocabulary.due ({due}) > total_studied ({total_studied})"
+        )
+
+    # Coverage percent should be 0-100
+    coverage_percent = coverage.get("percent")
+    if coverage_percent is not None and not (0 <= coverage_percent <= 100):
+        errors.append(f"coverage.percent out of range ({coverage_percent})")
+
+    # Competency score should be 0-100
+    competency_score = payload.get("competency_score")
+    if competency_score is not None and not (0 <= competency_score <= 100):
+        errors.append(f"competency_score out of range ({competency_score})")
+
+    # Grammar domain progress should be 0-100 and internally consistent
+    domains = grammar.get("domains", {})
+    for domain_key, domain in domains.items():
+        progress = domain.get("progress")
+        total_mastery = domain.get("total_mastery")
+        max_mastery = domain.get("max_mastery")
+        if progress is not None and not (0 <= progress <= 100):
+            errors.append(f"grammar.domains[{domain_key}].progress out of range ({progress})")
+        if max_mastery:
+            expected = round((total_mastery / max_mastery) * 100, 1)
+            if progress is not None and abs(progress - expected) > 0.1:
+                errors.append(
+                    f"grammar.domains[{domain_key}].progress ({progress}) != expected ({expected})"
+                )
+
+    return errors
 
 
 @bp.route('/comprehensive', methods=['GET'])
@@ -369,7 +439,7 @@ def get_comprehensive_stats():
         # RETURN COMPREHENSIVE DATA
         # ====================================================================
         
-        return jsonify({
+        payload = {
             # Vocabulary
             "vocabulary": {
                 "total_studied": total_words_studied,
@@ -417,7 +487,17 @@ def get_comprehensive_stats():
                 "reviews_completed": today_reviews,
                 "words_learned": today_new
             }
-        })
+        }
+
+        validation_errors = _validate_dashboard_payload(payload)
+        if validation_errors:
+            print(f"Dashboard stats validation failed: {validation_errors}")
+            return jsonify({
+                "error": "Dashboard statistics failed validation",
+                "details": validation_errors
+            }), 500
+
+        return jsonify(payload)
         
     except Exception as e:
         print(f"Error fetching dashboard: {e}")

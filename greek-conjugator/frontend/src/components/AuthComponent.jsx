@@ -16,14 +16,24 @@ const AuthComponent = ({ user, setUser }) => {
     setLoading(true);
     setError('');
 
+    const email = formData.email.trim();
+    const password = formData.password.trim();
+    const username = formData.username.trim();
+
+    if (!email || !password) {
+      setError('Email and password are required.');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isLogin) {
-        const response = await authService.login(formData.email, formData.password);
+        const response = await authService.login(email, password);
         setUser(response.user);
       } else {
-        await authService.register(formData.email, formData.username, formData.password);
+        await authService.register(email, username, password);
         // Auto-login after registration
-        const loginResponse = await authService.login(formData.email, formData.password);
+        const loginResponse = await authService.login(email, password);
         setUser(loginResponse.user);
       }
     } catch (error) {
@@ -82,6 +92,7 @@ const AuthComponent = ({ user, setUser }) => {
           <div className="flex">
             <button
               onClick={() => setIsLogin(true)}
+              type="button"
               className={`flex-1 py-4 text-center font-medium transition-colors ${isLogin
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                   : 'bg-slate-700 text-slate-400 hover:text-white'
@@ -91,6 +102,7 @@ const AuthComponent = ({ user, setUser }) => {
             </button>
             <button
               onClick={() => setIsLogin(false)}
+              type="button"
               className={`flex-1 py-4 text-center font-medium transition-colors ${!isLogin
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                   : 'bg-slate-700 text-slate-400 hover:text-white'
