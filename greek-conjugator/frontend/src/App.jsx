@@ -3,10 +3,6 @@ import './App.css';
 import AuthComponent from './components/AuthComponent';
 import HomeScreen from './components/HomeScreen';
 import PracticeSession from './components/PracticeSession';
-import GreekConjugationApp from './components/GreekConjugationApp';
-import NounDeclinationApp from './components/NounDeclinationApp';
-import AdjectiveApp from './components/AdjectiveApp';
-import ArticleApp from './components/ArticleApp';
 import VocabularyPractice from './components/VocabularyPractice';
 import ProgressMap from './components/ProgressMap';
 import { authService } from './services/api';
@@ -38,13 +34,7 @@ const App = () => {
   // Start practice with selected settings
   const handleStartPractice = (settings) => {
     setPracticeSettings(settings);
-
-    // Use new backend-powered practice for verb conjugations
-    if ((settings.mode === 'verb' || settings.mode === 'conjugation') && settings.useBackend) {
-      setCurrentScreen('new-practice');
-    } else {
-      setCurrentScreen('practice');
-    }
+    setCurrentScreen('new-practice');
   };
 
   // Return to home screen
@@ -89,30 +79,6 @@ const App = () => {
         return <VocabularyPractice user={user} onBackToHome={handleBackToHome} />;
       case 'progress':
         return <ProgressMap user={user} onBackToHome={handleBackToHome} onStartPractice={handleStartPractice} />;
-      case 'practice':
-        // Select the appropriate practice component based on mode
-        switch (practiceSettings.mode) {
-          case 'verb':
-            return <GreekConjugationApp
-              settings={practiceSettings}
-              onBackToHome={handleBackToHome}
-            />;
-          case 'noun':
-            return <NounDeclinationApp
-              settings={practiceSettings}
-              onBackToHome={handleBackToHome}
-            />;
-          case 'adjective':
-            return <AdjectiveApp
-              onBackToHome={handleBackToHome}
-            />;
-          case 'article':
-            return <ArticleApp
-              onBackToHome={handleBackToHome}
-            />;
-          default:
-            return <div>Invalid practice mode</div>;
-        }
       default:
         return <div>Screen not found</div>;
     }
