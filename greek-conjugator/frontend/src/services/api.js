@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configure axios defaults
-const API_BASE_URL = process.env.NODE_ENV === 'production'
+export const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://yourusername.pythonanywhere.com/api'
   : 'http://localhost:5000/api'; // Local Flask backend
 
@@ -369,6 +369,27 @@ export const textValidationService = {
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.error || 'Failed to get keyboard mapping');
+    }
+  }
+};
+
+// Audio service
+export const audioService = {
+  async generateConjugationAudio(conjugationId) {
+    try {
+      const response = await api.post(`/audio/conjugation/${conjugationId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to generate audio');
+    }
+  },
+
+  async generateVocabularyAudio(wordId) {
+    try {
+      const response = await api.post(`/audio/vocabulary/${wordId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to generate audio');
     }
   }
 };

@@ -39,3 +39,7 @@ kaikki.org-dictionary-Greek.jsonl
 extracted_verbs.json
 import_verbs.sql
 greek_5000_words.txt
+
+#audio cache
+audio_cache/
+backend/audio_cache/

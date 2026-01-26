@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { vocabularyService } from '../services/api';
+import { vocabularyService, audioService, API_BASE_URL } from '../services/api';
+import { playChime, playBloop, playClick } from '../services/sound';
 
 const VocabularyPractice = ({ user, onBackToHome }) => {
   // Practice state
@@ -11,12 +12,14 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [autoPlayAudio, setAutoPlayAudio] = useState(true);
   
   // Settings state
   const [direction, setDirection] = useState('greek_to_english');
   const [practiceType, setPracticeType] = useState('random');
   const [wordType, setWordType] = useState('');
-  const [category, setCategory] = useState('');
+  const [category] = useState('');
   const [questionType, setQuestionType] = useState('multiple_choice'); // 'multiple_choice', 'type', 'flashcard'
   const [wordCount, setWordCount] = useState(10);
   const [dailyNewLimit, setDailyNewLimit] = useState(10);
@@ -201,6 +204,11 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
       
       setIsCorrect(result.correct);
       setShowResult(true);
+      if (result.correct) {
+        playChime();
+      } else {
+        playBloop();
+      }
       
       // Update session stats
       setSessionStats(prev => {
@@ -229,6 +237,7 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
       
       setIsCorrect(false);
       setShowResult(true);
+      playBloop();
       
       // Update session stats (counts as incorrect)
       setSessionStats(prev => ({
@@ -261,6 +270,32 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
       } else if (typedAnswer || selectedAnswer) {
         handleSubmitAnswer();
       }
+    }
+  };
+
+  useEffect(() => {
+    if (!autoPlayAudio) return;
+    if (!currentQuestion || showResult) return;
+    playWordAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlayAudio, currentQuestion?.word_id]);
+
+  const playWordAudio = async () => {
+    if (!currentQuestion?.word_id) return;
+    setAudioLoading(true);
+    try {
+      const response = await audioService.generateVocabularyAudio(currentQuestion.word_id);
+      if (response?.audio_url) {
+        const resolvedUrl = response.audio_url.startsWith('/api/')
+          ? `${API_BASE_URL}${response.audio_url.replace('/api', '')}`
+          : response.audio_url;
+        const audio = new Audio(resolvedUrl);
+        await audio.play();
+      }
+    } catch (error) {
+      console.error('Failed to play audio:', error);
+    } finally {
+      setAudioLoading(false);
     }
   };
 
@@ -332,10 +367,13 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
                 </div>
               ) : totalCards > 0 ? (
                 <button
-                  onClick={startSmartPractice}
+                  onClick={() => {
+                    playClick();
+                    startSmartPractice();
+                  }}
                   disabled={loading}
                   className="w-full py-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xl font-bold rounded-xl 
-                    hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-[1.02] 
+                    hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-[1.02] btn-press
                     disabled:opacity-50 disabled:transform-none shadow-lg"
                 >
                   {loading ? (
@@ -552,9 +590,12 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
 
               {/* Start Custom Practice Button */}
               <button
-                onClick={startPractice}
+                onClick={() => {
+                  playClick();
+                  startPractice();
+                }}
                 disabled={loading}
-                className="w-full py-3 bg-slate-700 text-white font-medium rounded-lg 
+                className="w-full py-3 bg-slate-700 text-white font-medium rounded-lg btn-press
                   hover:bg-slate-600 transition-all disabled:opacity-50"
               >
                 {loading ? 'Loading...' : 'Start Custom Practice'}
@@ -638,9 +679,12 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
               {/* Buttons */}
               <div className="space-y-3">
                 <button
-                  onClick={handleBackToVocabSetup}
+                  onClick={() => {
+                    playClick();
+                    handleBackToVocabSetup();
+                  }}
                   className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl 
-                    hover:from-blue-600 hover:to-cyan-600 transition-all"
+                    hover:from-blue-600 hover:to-cyan-600 transition-all btn-press"
                 >
                   Continue Studying
                 </button>
@@ -696,8 +740,26 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
           <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
             {/* Question */}
             <div className="p-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
-              <div className="text-sm opacity-80 mb-2">
-                {direction === 'greek_to_english' ? '🇬🇷 Translate to English:' : '🇬🇧 Translate to Greek:'}
+              <div className="text-sm opacity-80 mb-2 flex items-center justify-between">
+                <span>{direction === 'greek_to_english' ? '🇬🇷 Translate to English:' : '🇬🇧 Translate to Greek:'}</span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-xs text-white/90">
+                    <span>Autoplay</span>
+                    <input
+                      type="checkbox"
+                      checked={autoPlayAudio}
+                      onChange={(e) => setAutoPlayAudio(e.target.checked)}
+                      className="accent-cyan-300"
+                    />
+                  </label>
+                  <button
+                    onClick={playWordAudio}
+                    disabled={audioLoading}
+                    className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
+                  >
+                    {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
+                  </button>
+                </div>
               </div>
               <div className="text-3xl font-bold">{currentQuestion.question}</div>
               <div className="text-sm opacity-80 mt-2">
@@ -850,24 +912,33 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
                 {!showResult ? (
                   <>
                     <button
-                      onClick={handleSubmitAnswer}
+                      onClick={() => {
+                        playClick();
+                        handleSubmitAnswer();
+                      }}
                       disabled={!selectedAnswer && !typedAnswer}
-                      className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl 
+                      className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl btn-press
                         hover:from-blue-600 hover:to-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Check Answer
                     </button>
                     <button
-                      onClick={handleDontKnow}
-                      className="w-full py-3 bg-slate-700 text-slate-300 font-medium rounded-xl hover:bg-slate-600 transition-colors"
+                      onClick={() => {
+                        playClick();
+                        handleDontKnow();
+                      }}
+                      className="w-full py-3 bg-slate-700 text-slate-300 font-medium rounded-xl btn-press hover:bg-slate-600 transition-colors"
                     >
                       🤷 I don't know
                     </button>
                   </>
                 ) : (
                   <button
-                    onClick={handleNext}
-                    className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl 
+                    onClick={() => {
+                      playClick();
+                      handleNext();
+                    }}
+                    className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl btn-press
                       hover:from-blue-600 hover:to-cyan-600 transition-colors"
                   >
                     {currentIndex + 1 >= words.length ? '🏁 Finish' : 'Next →'}

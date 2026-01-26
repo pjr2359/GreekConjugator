@@ -12,14 +12,13 @@ fi
 echo "📦 Installing frontend dependencies..."
 (cd frontend && npm install)
 
-echo "🐍 Setting up Python virtual environment..."
-(cd backend && python3 -m venv venv)
+echo "🐍 Setting up root Python virtual environment..."
+if [ ! -d "../venv" ]; then
+    (cd .. && python3 -m venv venv)
+fi
 
-echo "📦 Installing backend dependencies..."
-(cd backend && source venv/bin/activate && pip install -r requirements.txt)
-
-echo "🌱 Setting up database and seeding data..."
-(cd backend && source venv/bin/activate && python3 seed_db.py)
+echo "📦 Installing backend dependencies into root venv..."
+(cd backend && source ../venv/bin/activate && pip install -r requirements.txt)
 
 echo "✅ Setup complete!"
 echo ""

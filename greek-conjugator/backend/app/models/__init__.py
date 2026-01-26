@@ -145,3 +145,20 @@ class PracticeSession(db.Model):
             'accuracy_rate': float(self.accuracy_rate) if self.accuracy_rate else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+
+class AudioUsage(db.Model):
+    __tablename__ = 'audio_usage'
+    id = db.Column(db.Integer, primary_key=True)
+    usage_date = db.Column(db.String(10), unique=True, nullable=False)  # YYYY-MM-DD
+    chars_used = db.Column(db.Integer, default=0)
+    requests_count = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'usage_date': self.usage_date,
+            'chars_used': self.chars_used,
+            'requests_count': self.requests_count,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

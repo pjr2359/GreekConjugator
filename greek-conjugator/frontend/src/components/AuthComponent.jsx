@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { authService } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import api, { authService } from '../services/api';
 
 const AuthComponent = ({ user, setUser }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,6 +10,30 @@ const AuthComponent = ({ user, setUser }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [backendHealthy, setBackendHealthy] = useState(true);
+  const [checkingBackend, setCheckingBackend] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkBackend = async () => {
+      setCheckingBackend(true);
+      try {
+        await api.get('/text/health');
+        if (isMounted) setBackendHealthy(true);
+      } catch (err) {
+        if (isMounted) setBackendHealthy(false);
+      } finally {
+        if (isMounted) setCheckingBackend(false);
+      }
+    };
+
+    checkBackend();
+    const interval = setInterval(checkBackend, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,6 +112,11 @@ const AuthComponent = ({ user, setUser }) => {
 
         {/* Auth Card */}
         <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+          {!backendHealthy && !checkingBackend && (
+            <div className="bg-red-500/20 border-b border-red-500/40 text-red-200 px-4 py-3 text-sm">
+              Backend not reachable at `http://localhost:5000`. Start the backend and refresh.
+            </div>
+          )}
           {/* Tab Switcher */}
           <div className="flex">
             <button

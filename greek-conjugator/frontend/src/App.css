@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+.btn-press {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+.btn-press:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
 .App {
   text-align: center;
 }

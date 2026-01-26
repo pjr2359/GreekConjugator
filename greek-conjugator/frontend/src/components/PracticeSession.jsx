@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import GreekKeyboard, { compareGreekTexts } from './GreekKeyboard';
-import { verbsService, textValidationService, skillsService } from '../services/api';
+import { compareGreekTexts } from './GreekKeyboard';
+import { verbsService, textValidationService, skillsService, audioService, API_BASE_URL } from '../services/api';
+import { playChime, playBloop, playClick } from '../services/sound';
 
 // Grammar term definitions for tooltips (lowercase keys to match database values)
 const grammarTerms = {
@@ -83,9 +84,6 @@ const ConjugationPrompt = ({ tense, mood, voice, number, form }) => {
 const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   // Extract skill category settings if practicing a specific skill
   const skillCategory = settings?.skillCategory;
-  const skillTense = settings?.tense;
-  const skillMood = settings?.mood;
-  const skillVoice = settings?.voice;
   const [sessionData, setSessionData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -96,22 +94,20 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   const [sessionComplete, setSessionComplete] = useState(false);
   const [conjugations, setConjugations] = useState({});
   const [validationResult, setValidationResult] = useState(null);
-  const [showHints, setShowHints] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isEndlessMode, setIsEndlessMode] = useState(true); // Default to endless mode
   // New smart practice features - Multiple choice only
   const [practiceMode, setPracticeMode] = useState('multiple_choice'); // Force multiple choice only
-  const [answerMode, setAnswerMode] = useState('multiple_choice'); // Force multiple choice only
   const [smartQuestion, setSmartQuestion] = useState(null);
   const [selectedMultipleChoice, setSelectedMultipleChoice] = useState(null);
-  const [flashcardRevealed, setFlashcardRevealed] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [autoPlayAudio, setAutoPlayAudio] = useState(true);
 
   // Gamification state
   const [skillStats, setSkillStats] = useState(null);
   const [xpGained, setXpGained] = useState(0);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
   const [levelUp, setLevelUp] = useState(false);
-  const [currentStreak, setCurrentStreak] = useState(0);
 
   const [practiceStats, setPracticeStats] = useState({
     totalQuestions: 0,
@@ -151,6 +147,17 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     }
   };
 
+  // Build stable multiple-choice options for a conjugation
+  const buildMultipleChoiceOptions = (verbConjugations, correctForm) => {
+    const otherForms = verbConjugations
+      .map(c => c.form)
+      .filter(f => f && f !== correctForm && f !== '-')
+      .filter((v, i, a) => a.indexOf(v) === i);
+
+    const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
+    return [correctForm, ...shuffled].sort(() => Math.random() - 0.5);
+  };
+
   // Get current question data
   const getCurrentQuestion = () => {
     if (!sessionData || !sessionData.verbs[currentQuestionIndex]) return null;
@@ -164,10 +171,12 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     if (!currentQuestion || currentQuestion.verb.id !== verb.id) {
       // Pick a random conjugation for this question
       const randomConjugation = verbConjugations[Math.floor(Math.random() * verbConjugations.length)];
+      const options = buildMultipleChoiceOptions(verbConjugations, randomConjugation.form);
 
       const newQuestion = {
         verb,
         conjugation: randomConjugation,
+        options,
         prompt: `Conjugate "${verb.infinitive}" (${verb.english}) in ${randomConjugation.tense} tense, ${randomConjugation.mood} mood, ${randomConjugation.person} person ${randomConjugation.number}`
       };
 
@@ -193,52 +202,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   };
 
   // Submit answer
-  const submitAnswer = async () => {
-    const question = getCurrentQuestion();
-    if (!question) return;
-
-    setLoading(true);
-    try {
-      const correct = await checkAnswer(userAnswer, question.conjugation.form);
-      setIsCorrect(correct);
-      setShowResult(true);
-
-      // Update score
-      const newScore = {
-        correct: score.correct + (correct ? 1 : 0),
-        total: score.total + 1
-      };
-      setScore(newScore);
-
-      // Update practice stats
-      const newTotalQuestions = practiceStats.totalQuestions + 1;
-      const newCorrectAnswers = practiceStats.correctAnswers + (correct ? 1 : 0);
-      const newStreak = correct ? practiceStats.streak + 10 : 0;
-      const newMaxStreak = Math.max(practiceStats.maxStreak, newStreak);
-
-      setPracticeStats({
-        totalQuestions: newTotalQuestions,
-        correctAnswers: newCorrectAnswers,
-        accuracy: Math.round((newCorrectAnswers / newTotalQuestions) * 100),
-        streak: newStreak,
-        maxStreak: newMaxStreak
-      });
-
-      // Submit to backend
-      await verbsService.submitAnswer(
-        sessionData.session_id,
-        question.conjugation.id,
-        userAnswer,
-        correct
-      );
-    } catch (error) {
-      console.error('Failed to submit answer:', error);
-      // Still show result even if API fails
-      setShowResult(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // submitAnswer is unused; smart mode uses submitSmartAnswer
 
   // Move to next question
   const nextQuestion = () => {
@@ -352,6 +316,11 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
       const correct = userInput === smartQuestion.correct_answer;
       setIsCorrect(correct);
       setShowResult(true);
+      if (correct) {
+        playChime();
+      } else {
+        playBloop();
+      }
 
       // XP animation for correct answer
       if (correct) {
@@ -397,13 +366,6 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   };
 
   // Toggle between endless and fixed session modes
-  const toggleMode = () => {
-    setIsEndlessMode(!isEndlessMode);
-    setSessionComplete(false);
-    setCurrentQuestionIndex(0);
-    setScore({ correct: 0, total: 0 });
-  };
-
   // Don't auto-start - wait for user to click Start Practice
 
   // Load skill stats on mount
@@ -426,9 +388,57 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
     // Generate question client-side (instant, no API call)
     generateSmartQuestion();
-  }, [sessionData, practiceMode, currentQuestionIndex, conjugations]);
+  }, [sessionData, practiceMode, currentQuestionIndex, conjugations, showResult]);
+
+  useEffect(() => {
+    if (!autoPlayAudio) return;
+    if (!sessionData) return;
+    if (showResult) return;
+    if (!question && !smartQuestion) return;
+    playConjugationAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlayAudio, question?.conjugation?.id, smartQuestion?.conjugation?.id]);
 
   const question = getCurrentQuestion();
+
+  const updateConjugationAudioUrl = (conjugationId, audioUrl) => {
+    setConjugations(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((verbId) => {
+        updated[verbId] = updated[verbId].map((conj) =>
+          conj.id === conjugationId ? { ...conj, audio_url: audioUrl } : conj
+        );
+      });
+      return updated;
+    });
+  };
+
+  const playConjugationAudio = async () => {
+    const activeQuestion = smartQuestion || question;
+    if (!activeQuestion?.conjugation?.id) return;
+
+    setAudioLoading(true);
+    try {
+      let audioUrl = activeQuestion.conjugation.audio_url;
+      if (!audioUrl) {
+        const response = await audioService.generateConjugationAudio(activeQuestion.conjugation.id);
+        audioUrl = response.audio_url;
+        updateConjugationAudioUrl(activeQuestion.conjugation.id, audioUrl);
+      }
+
+      if (audioUrl) {
+        const resolvedUrl = audioUrl.startsWith('/api/')
+          ? `${API_BASE_URL}${audioUrl.replace('/api', '')}`
+          : audioUrl;
+        const audio = new Audio(resolvedUrl);
+        await audio.play();
+      }
+    } catch (error) {
+      console.error('Failed to play audio:', error);
+    } finally {
+      setAudioLoading(false);
+    }
+  };
 
   // Show loading spinner only when actively loading
   if (loading) {
@@ -555,12 +565,11 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
               <button
                 onClick={() => {
+                  playClick();
                   setPracticeMode('multiple_choice'); // Force multiple choice
-                  setAnswerMode('multiple_choice'); // Force multiple choice
-                  setFlashcardRevealed(false);
                   startSession();
                 }}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl btn-press
                 hover:from-purple-600 hover:to-pink-600 transition-all text-lg mb-3"
               >
                 ▶️ Start Practice
@@ -597,10 +606,13 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => startSession('graded', 3)}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all"
-              >
+                <button
+                  onClick={() => {
+                    playClick();
+                    startSession('graded', 3);
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl btn-press hover:from-purple-600 hover:to-pink-600 transition-all"
+                >
                 Start New Session
               </button>
               <button
@@ -720,8 +732,21 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
           <div className="p-6">
             {/* Practice Mode Info - Multiple Choice Only */}
             <div className="mb-6 p-4 bg-emerald-600/20 rounded-xl border border-emerald-500/50">
-              <h3 className="font-semibold text-emerald-400 mb-1 text-sm">📝 Multiple Choice Practice</h3>
-              <p className="text-xs text-slate-400">Select the correct conjugation from the options provided</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-emerald-400 mb-1 text-sm">📝 Multiple Choice Practice</h3>
+                  <p className="text-xs text-slate-400">Select the correct conjugation from the options provided</p>
+                </div>
+                <label className="flex items-center gap-2 text-xs text-slate-200">
+                  <span>Autoplay</span>
+                  <input
+                    type="checkbox"
+                    checked={autoPlayAudio}
+                    onChange={(e) => setAutoPlayAudio(e.target.checked)}
+                    className="accent-emerald-500"
+                  />
+                </label>
+              </div>
             </div>
 
             {/* Real-time practice statistics */}
@@ -765,8 +790,15 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
               {smartQuestion && (practiceMode === 'smart' || practiceMode === 'multiple_choice') ? (
                 // Smart Practice Question
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
-                  <div className="text-white/80 text-sm mb-2">
+                  <div className="text-white/80 text-sm mb-2 flex items-center justify-between">
                     {smartQuestion.type === 'multiple_choice' ? '📝 Multiple Choice' : '✍️ Conjugate'}
+                    <button
+                      onClick={playConjugationAudio}
+                      disabled={audioLoading}
+                      className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
+                    >
+                      {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
+                    </button>
                   </div>
                   <div className="text-center mb-4">
                     <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
@@ -791,7 +823,16 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
               ) : (
                 // Regular Practice Question (Multiple Choice Only)
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
-                  <div className="text-white/80 text-sm mb-2">📝 Which form matches?</div>
+                  <div className="text-white/80 text-sm mb-2 flex items-center justify-between">
+                    <span>📝 Which form matches?</span>
+                    <button
+                      onClick={playConjugationAudio}
+                      disabled={audioLoading}
+                      className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
+                    >
+                      {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
+                    </button>
+                  </div>
                   <div className="text-center mb-4">
                     <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
                       {question.verb.infinitive}
@@ -816,22 +857,11 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
             {/* Answer input - Multiple Choice Only */}
             {!showResult ? (
               <div className="mb-6 space-y-3">
-                {(() => {
-                  const verbConjs = smartQuestion
-                    ? conjugations[smartQuestion.verb.id] || []
-                    : conjugations[question.verb.id] || [];
-                  const correctForm = smartQuestion ? smartQuestion.correct_answer : question.conjugation.form;
-                  const otherForms = verbConjs
-                    .map(c => c.form)
-                    .filter(f => f && f !== correctForm && f !== '-')
-                    .filter((v, i, a) => a.indexOf(v) === i);
-                  const shuffled = otherForms.sort(() => Math.random() - 0.5).slice(0, 3);
-                  return [correctForm, ...shuffled].sort(() => Math.random() - 0.5);
-                })().map((option, index) => (
+                {(smartQuestion?.options || question.options || []).map((option, index) => (
                   <button
                     key={index}
                     onClick={() => handleMultipleChoiceSelect(option)}
-                    className={`w-full p-4 text-left rounded-xl border-2 transition-all ${selectedMultipleChoice === option
+                    className={`w-full p-4 text-left rounded-xl border-2 transition-all btn-press ${selectedMultipleChoice === option
                         ? 'border-purple-500 bg-purple-500/20 text-white'
                         : 'border-slate-600 bg-slate-700/50 text-slate-200 hover:border-slate-500'
                       }`}
@@ -844,7 +874,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 <button
                   onClick={submitSmartAnswer}
                   disabled={!selectedMultipleChoice || loading}
-                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl btn-press
                         hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {loading ? 'Checking...' : 'Submit Answer'}
@@ -891,8 +921,11 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 </div>
 
                 <button
-                  onClick={nextQuestion}
-                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl 
+                  onClick={() => {
+                    playClick();
+                    nextQuestion();
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl btn-press
               hover:from-purple-600 hover:to-pink-600 transition-all"
                 >
                   {isEndlessMode ? 'Next Question →' : 'Continue →'}

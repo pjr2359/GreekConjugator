@@ -24,18 +24,24 @@ def create_app():
     app.config['SESSION_KEY_PREFIX'] = 'greek_conjugator:'
     Session(app)
 
+    # Audio generation configuration
+    app.config['AUDIO_CACHE_DIR'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'audio_cache')
+    app.config['TTS_RPM_LIMIT'] = int(os.environ.get('TTS_RPM_LIMIT', '60'))
+    app.config['TTS_DAILY_CHAR_LIMIT'] = int(os.environ.get('TTS_DAILY_CHAR_LIMIT', '50000'))
+
     # Initialize database
     from .models import db
     db.init_app(app)
 
     # Register blueprints
-    from .routes import auth, verbs, text_validation, vocabulary, skills, dashboard
+    from .routes import auth, verbs, text_validation, vocabulary, skills, dashboard, audio
     app.register_blueprint(auth.bp)
     app.register_blueprint(verbs.bp)
     app.register_blueprint(text_validation.bp)
     app.register_blueprint(vocabulary.bp)
     app.register_blueprint(skills.bp)
     app.register_blueprint(dashboard.bp)
+    app.register_blueprint(audio.bp)
 
     # Create tables if they don't exist
     with app.app_context():

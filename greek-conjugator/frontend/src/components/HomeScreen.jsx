@@ -44,43 +44,6 @@ const SkillRing = ({ name, progress, color, size = 60 }) => {
 };
 
 // ============================================================================
-// QUEST ITEM COMPONENT
-// ============================================================================
-const QuestItem = ({ quest }) => {
-  const progressPercent = (quest.progress / quest.target) * 100;
-  
-  return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-      quest.completed 
-        ? 'bg-emerald-500/10 border border-emerald-500/30' 
-        : 'bg-slate-800/50 border border-slate-700/50'
-    }`}>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-        quest.completed ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'
-      }`}>
-        {quest.completed ? '✓' : quest.progress}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className={`text-sm font-medium ${quest.completed ? 'text-emerald-400' : 'text-slate-300'}`}>
-            {quest.name}
-          </span>
-          <span className="text-xs text-amber-400">+{quest.xp} XP</span>
-        </div>
-        <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
-          <div 
-            className={`h-full transition-all duration-500 ${
-              quest.completed ? 'bg-emerald-500' : 'bg-purple-500'
-            }`}
-            style={{ width: `${Math.min(progressPercent, 100)}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
 // PIXEL ART GIAGIA (Greek Grandmother) - CSS-based animated character
 // ============================================================================
 const PixelGiagia = ({ isWatering, position }) => {
@@ -137,197 +100,6 @@ const PixelGiagia = ({ isWatering, position }) => {
 };
 
 // ============================================================================
-// OLIVE TREE WIDGET - Pixel art tree that grows with your progress
-// ============================================================================
-const OliveTreeWidget = ({ wordsKnown, todayActivity }) => {
-  const [giagiaPosition, setGiagiaPosition] = useState('30%');
-  const [isWatering, setIsWatering] = useState(false);
-  
-  const getGrowthStage = () => {
-    if (wordsKnown >= 1000) return { stage: 4, name: 'Ancient', icon: '🏆', image: '/assets/olive-tree/ancient.png', size: 120 };
-    if (wordsKnown >= 500) return { stage: 3, name: 'Mature', icon: '🫒', image: '/assets/olive-tree/mature.png', size: 100 };
-    if (wordsKnown >= 100) return { stage: 2, name: 'Sapling', icon: '🌿', image: '/assets/olive-tree/sapling.png', size: 80 };
-    if (wordsKnown >= 25) return { stage: 1, name: 'Sprout', icon: '🌱', image: '/assets/olive-tree/sprout.png', size: 70 };
-    return { stage: 0, name: 'Seed', icon: '🫘', image: '/assets/olive-tree/sprout.png', size: 50 };
-  };
-  
-  const growth = getGrowthStage();
-  const isHealthy = todayActivity > 0;
-  const thresholds = [25, 100, 500, 1000, 1000];
-  const nextThreshold = thresholds[growth.stage];
-  const prevThreshold = growth.stage > 0 ? thresholds[growth.stage - 1] : 0;
-  const progressToNext = growth.stage < 4 
-    ? Math.min(((wordsKnown - prevThreshold) / (nextThreshold - prevThreshold)) * 100, 100)
-    : 100;
-  
-  // Animate giagia walking and watering
-  useEffect(() => {
-    if (isHealthy) {
-      // When healthy, giagia waters the tree
-      const wateringCycle = () => {
-        // Walk to tree
-        setGiagiaPosition('45%');
-        setIsWatering(false);
-        
-        // Start watering after reaching tree
-        setTimeout(() => {
-          setIsWatering(true);
-        }, 1500);
-        
-        // Stop watering and walk away
-        setTimeout(() => {
-          setIsWatering(false);
-          setGiagiaPosition('70%');
-        }, 4000);
-        
-        // Walk back
-        setTimeout(() => {
-          setGiagiaPosition('30%');
-        }, 6000);
-      };
-      
-      wateringCycle();
-      const interval = setInterval(wateringCycle, 10000);
-      return () => clearInterval(interval);
-    } else {
-      // When not healthy, giagia stands sadly
-      setGiagiaPosition('25%');
-      setIsWatering(false);
-    }
-  }, [isHealthy]);
-  
-  return (
-    <div className="bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-2xl border border-slate-700/50 overflow-hidden">
-      {/* Scene container with pixel art background */}
-      <div className="relative h-48 overflow-hidden">
-        {/* Pixel art landscape background */}
-        <img 
-          src="/assets/olive-tree/background-hilltop.png" 
-          alt="Greek island hilltop"
-          className="absolute inset-0 w-full h-full object-cover pixelated"
-          style={{ imageRendering: 'pixelated' }}
-        />
-        
-        {/* Subtle animated overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-        
-        {/* Pixel Art Tree - positioned on the hilltop */}
-        <div className={`absolute bottom-20 left-1/2 -translate-x-1/2 transition-all duration-500 ${isHealthy ? 'animate-sway' : 'opacity-70 grayscale-[30%]'}`}>
-          <img 
-            src={growth.image} 
-            alt={`${growth.name} olive tree`}
-            className="pixelated drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
-            style={{ 
-              width: growth.size, 
-              height: 'auto',
-              imageRendering: 'pixelated'
-            }}
-          />
-        </div>
-        
-        {/* Animated Giagia */}
-        <PixelGiagia isWatering={isWatering} position={giagiaPosition} />
-        
-        {/* Sparkles when healthy */}
-        {isHealthy && growth.stage >= 1 && (
-          <div className="absolute bottom-36 left-1/2 -translate-x-1/2 pointer-events-none">
-            <div className="animate-sparkle">
-              <div className="absolute -left-10 -top-6 w-2 h-2 bg-yellow-300 rounded-full shadow-lg shadow-yellow-300/50" />
-              <div className="absolute left-8 -top-10 w-1.5 h-1.5 bg-yellow-200 rounded-full shadow-lg shadow-yellow-200/50" style={{animationDelay: '0.5s'}} />
-              <div className="absolute -left-5 top-2 w-1 h-1 bg-yellow-300 rounded-full shadow-lg shadow-yellow-300/50" style={{animationDelay: '1s'}} />
-            </div>
-          </div>
-        )}
-        
-        {/* Health indicator */}
-        <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-medium shadow-lg ${
-          isHealthy 
-            ? 'bg-emerald-600/90 text-white border border-emerald-400/50' 
-            : 'bg-amber-600/90 text-white border border-amber-400/50'
-        }`} style={{fontFamily: 'inherit'}}>
-          {isHealthy ? '✨ Thriving' : '💧 Water me'}
-        </div>
-      </div>
-      
-      {/* Info bar */}
-      <div className="px-4 py-3 bg-slate-900/80">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{growth.icon}</span>
-            <div>
-              <div className="text-sm font-medium text-white">{growth.name} Tree</div>
-              <div className="text-xs text-slate-400">{wordsKnown} words learned</div>
-            </div>
-          </div>
-          {growth.stage < 4 && (
-            <div className="text-right">
-              <div className="text-xs text-cyan-400">{nextThreshold - wordsKnown} to next</div>
-            </div>
-          )}
-          {growth.stage >= 4 && (
-            <div className="text-xs text-amber-400">🏆 Max Growth!</div>
-          )}
-        </div>
-        
-        {/* Growth progress */}
-        <div className="flex gap-1">
-          {[0, 1, 2, 3, 4].map((stage) => (
-            <div 
-              key={stage}
-              className={`h-1.5 flex-1 rounded-full transition-all overflow-hidden ${
-                stage < growth.stage ? 'bg-emerald-500' :
-                stage === growth.stage ? 'bg-slate-700' :
-                'bg-slate-700'
-              }`}
-            >
-              {stage === growth.stage && (
-                <div 
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                  style={{ width: `${progressToNext}%` }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-1 text-xs text-slate-500">
-          <span>Seed</span>
-          <span>Sprout</span>
-          <span>Sapling</span>
-          <span>Mature</span>
-          <span>Ancient</span>
-        </div>
-      </div>
-      
-      {/* CSS */}
-      <style>{`
-        @keyframes cloud-move { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(20px); } }
-        @keyframes cloud-move-slow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(15px); } }
-        @keyframes wave-move { 0%, 100% { transform: translateX(0) scaleY(1); } 50% { transform: translateX(-10px) scaleY(0.8); } }
-        @keyframes tree-sway { 0%, 100% { transform: translateX(-50%) rotate(-1deg); } 50% { transform: translateX(-50%) rotate(1deg); } }
-        @keyframes sparkle-anim { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1); } }
-        @keyframes water-drop { 
-          0% { opacity: 1; transform: translateY(0); } 
-          100% { opacity: 0; transform: translateY(8px); } 
-        }
-        @keyframes giagia-bob { 
-          0%, 100% { transform: translateX(-50%) translateY(0); } 
-          50% { transform: translateX(-50%) translateY(-2px); } 
-        }
-        .animate-cloud { animation: cloud-move 15s ease-in-out infinite; }
-        .animate-cloud-slow { animation: cloud-move-slow 20s ease-in-out infinite; }
-        .animate-wave { animation: wave-move 3s ease-in-out infinite; }
-        .animate-sway { animation: tree-sway 4s ease-in-out infinite; }
-        .animate-sparkle div { animation: sparkle-anim 2s ease-in-out infinite; }
-        .animate-water-drop { animation: water-drop 0.5s ease-in infinite; }
-        .animate-giagia-walk { animation: giagia-bob 0.4s ease-in-out infinite; }
-        .animate-giagia-water { animation: none; }
-        .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
-      `}</style>
-    </div>
-  );
-};
-
-// ============================================================================
 // MAIN HOME SCREEN COMPONENT
 // ============================================================================
 const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }) => {
@@ -360,7 +132,6 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }
   const vocab = dashboard?.vocabulary || {};
   const coverage = dashboard?.coverage || {};
   const grammar = dashboard?.grammar || {};
-  const quests = dashboard?.quests || [];
   const nextStep = dashboard?.next_step || {};
   const tier = coverage?.tier?.current || { name: 'Beginner', greek: 'Αρχάριος' };
   const nextTier = coverage?.tier?.next;
@@ -378,8 +149,8 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 pb-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6 pb-10">
+      <div className="max-w-4xl w-full mx-auto">
         
         {/* Header */}
         <header className="flex items-center justify-between mb-4 pt-2">
@@ -431,7 +202,7 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }
                   else if (nextStep.route === 'conjugation') startConjugationPractice();
                   else if (nextStep.route === 'progress') onViewProgress();
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/20 text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/20 text-white transition-all btn-press"
               >
                 Go →
               </button>
@@ -508,7 +279,7 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }
           <button
             onClick={onStartVocabulary}
             className="w-full bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 
-              text-white font-semibold py-3.5 px-4 rounded-xl transition-all flex items-center justify-between shadow-lg shadow-cyan-900/30"
+              text-white font-semibold py-3.5 px-4 rounded-xl transition-all flex items-center justify-between shadow-lg shadow-cyan-900/30 btn-press"
           >
             <div className="flex items-center gap-3">
               <span className="text-xl">📚</span>
@@ -520,7 +291,7 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }
           <button
             onClick={startConjugationPractice}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-700 hover:from-purple-500 hover:to-pink-600 
-              text-white font-semibold py-3.5 px-4 rounded-xl transition-all flex items-center justify-between shadow-lg shadow-purple-900/30"
+              text-white font-semibold py-3.5 px-4 rounded-xl transition-all flex items-center justify-between shadow-lg shadow-purple-900/30 btn-press"
           >
             <div className="flex items-center gap-3">
               <span className="text-xl">📝</span>
@@ -532,7 +303,7 @@ const HomeScreen = ({ onStartPractice, onStartVocabulary, onViewProgress, user }
           <button
             onClick={onViewProgress}
             className="w-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 
-              text-slate-300 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+              text-slate-300 font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 btn-press"
           >
             <span>🗺️</span>
             <span>View Skill Tree</span>

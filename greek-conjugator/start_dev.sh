@@ -24,12 +24,9 @@ echo "🐍 Starting Flask backend..."
 if [ -f "../venv/bin/activate" ]; then
     echo "   Using root venv"
     (cd backend && source ../venv/bin/activate && python3 run_backend.py) &
-elif [ -f "backend/venv/bin/activate" ]; then
-    echo "   Using backend venv"
-    (cd backend && source venv/bin/activate && python3 run_backend.py) &
 else
-    echo "   No venv found, using system Python"
-    (cd backend && python3 run_backend.py) &
+    echo "❌ Root venv not found at ../venv. Please create/activate it first."
+    exit 1
 fi
 BACKEND_PID=$!
 
