@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { compareGreekTexts } from './GreekKeyboard';
 import { verbsService, textValidationService, skillsService, audioService, API_BASE_URL } from '../services/api';
 import { playChime, playBloop, playClick } from '../services/sound';
+import { toGreeklish } from '../utils/greeklish';
 
 // Grammar term definitions for tooltips (lowercase keys to match database values)
 const grammarTerms = {
@@ -60,22 +61,22 @@ const inferPersonFromEnding = (form) => {
   if (form.endsWith('ω') || form.endsWith('ομαι')) return '1st';
   if (form.endsWith('εις') || form.endsWith('εσαι') || form.endsWith('ες')) return '2nd';
   if (form.endsWith('ει') || form.endsWith('εται') || form.endsWith('ε')) return '3rd';
-  if (form.endsWith('ουμε') || form.endsWith('όμαστε') || form.endsWith('αμε')) return '1st pl';
-  if (form.endsWith('ετε') || form.endsWith('εστε') || form.endsWith('ατε')) return '2nd pl';
-  if (form.endsWith('ουν') || form.endsWith('ονται') || form.endsWith('αν')) return '3rd pl';
+  if (form.endsWith('ουμε') || form.endsWith('όμαστε') || form.endsWith('αμε')) return '1st';
+  if (form.endsWith('ετε') || form.endsWith('εστε') || form.endsWith('ατε')) return '2nd';
+  if (form.endsWith('ουν') || form.endsWith('ονται') || form.endsWith('αν')) return '3rd';
   return null;
 };
 
 // Parse and render conjugation prompt with tooltips
-const ConjugationPrompt = ({ tense, mood, voice, number, form }) => {
-  const person = inferPersonFromEnding(form);
+const ConjugationPrompt = ({ tense, mood, voice, number, form, person }) => {
+  const resolvedPerson = person || inferPersonFromEnding(form);
 
   return (
     <span className="text-white/90 flex flex-wrap justify-center gap-2">
       {tense && <GrammarTerm term={tense} />}
       {mood && <><span className="text-white/50">•</span><GrammarTerm term={mood} /></>}
       {voice && <><span className="text-white/50">•</span><GrammarTerm term={voice} /></>}
-      {person && <><span className="text-white/50">•</span><span className="font-medium text-amber-300">{person} person</span></>}
+      {resolvedPerson && <><span className="text-white/50">•</span><span className="font-medium text-amber-300">{resolvedPerson} person</span></>}
       {number && <><span className="text-white/50">•</span><GrammarTerm term={number} /></>}
     </span>
   );
@@ -84,6 +85,9 @@ const ConjugationPrompt = ({ tense, mood, voice, number, form }) => {
 const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   // Extract skill category settings if practicing a specific skill
   const skillCategory = settings?.skillCategory;
+  const skillTense = settings?.tense;
+  const skillMood = settings?.mood;
+  const skillVoice = settings?.voice;
   const [sessionData, setSessionData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -102,6 +106,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   const [selectedMultipleChoice, setSelectedMultipleChoice] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [autoPlayAudio, setAutoPlayAudio] = useState(true);
+  const audioRef = useRef(null);
 
   // Gamification state
   const [skillStats, setSkillStats] = useState(null);
@@ -158,12 +163,41 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     return [correctForm, ...shuffled].sort(() => Math.random() - 0.5);
   };
 
+  const getFilteredConjugations = (verbConjugations) => {
+    if (!skillCategory) return verbConjugations;
+    return verbConjugations.filter((conj) => {
+      if (skillTense && conj.tense !== skillTense) return false;
+      if (skillMood && conj.mood !== skillMood) return false;
+      if (skillVoice && conj.voice !== skillVoice) return false;
+      return true;
+    });
+  };
+
+  const isUsableConjugation = (conj) => {
+    if (!conj) return false;
+    if (!conj.form || conj.form === '-') return false;
+    if (!conj.tense || !conj.mood || !conj.voice || !conj.number) return false;
+    const form = conj.form.trim();
+    if (
+      conj.tense === 'present' &&
+      conj.mood === 'indicative' &&
+      conj.voice === 'active' &&
+      form.startsWith('έ')
+    ) {
+      const pastEndings = ['α', 'ες', 'ε', 'αμε', 'ατε', 'αν'];
+      if (pastEndings.some((ending) => form.endsWith(ending))) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   // Get current question data
   const getCurrentQuestion = () => {
     if (!sessionData || !sessionData.verbs[currentQuestionIndex]) return null;
 
     const verb = sessionData.verbs[currentQuestionIndex];
-    const verbConjugations = conjugations[verb.id] || [];
+    const verbConjugations = getFilteredConjugations(conjugations[verb.id] || []).filter(isUsableConjugation);
 
     if (verbConjugations.length === 0) return null;
 
@@ -179,6 +213,18 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
         options,
         prompt: `Conjugate "${verb.infinitive}" (${verb.english}) in ${randomConjugation.tense} tense, ${randomConjugation.mood} mood, ${randomConjugation.person} person ${randomConjugation.number}`
       };
+
+      if (skillCategory) {
+        if (skillTense && randomConjugation.tense !== skillTense) {
+          console.warn('Skill filter mismatch (tense)', skillTense, randomConjugation.tense);
+        }
+        if (skillMood && randomConjugation.mood !== skillMood) {
+          console.warn('Skill filter mismatch (mood)', skillMood, randomConjugation.mood);
+        }
+        if (skillVoice && randomConjugation.voice !== skillVoice) {
+          console.warn('Skill filter mismatch (voice)', skillVoice, randomConjugation.voice);
+        }
+      }
 
       setCurrentQuestion(newQuestion);
       return newQuestion;
@@ -220,6 +266,24 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
         // Cycle back to the beginning for endless practice
         nextIndex = 0;
       }
+      if (skillCategory) {
+        // Find the next verb that has conjugations matching the skill filter
+        let candidateIndex = nextIndex;
+        let checked = 0;
+        while (checked < sessionData.verbs.length) {
+          const candidateVerb = sessionData.verbs[candidateIndex];
+          const candidateConjugations = getFilteredConjugations(conjugations[candidateVerb.id] || []);
+          if (candidateConjugations.length > 0) {
+            setCurrentQuestionIndex(candidateIndex);
+            return;
+          }
+          candidateIndex = (candidateIndex + 1) % sessionData.verbs.length;
+          checked += 1;
+        }
+        console.warn('No conjugations matched skill filters in session.');
+        setSessionComplete(true);
+        return;
+      }
       setCurrentQuestionIndex(nextIndex);
     } else {
       // Fixed session mode (5 questions)
@@ -231,7 +295,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
         let nextIndex = currentQuestionIndex + 1;
         while (nextIndex < sessionData.verbs.length) {
           const nextVerb = sessionData.verbs[nextIndex];
-          const nextVerbConjugations = conjugations[nextVerb.id] || [];
+          const nextVerbConjugations = getFilteredConjugations(conjugations[nextVerb.id] || []);
           if (nextVerbConjugations.length > 0) {
             setCurrentQuestionIndex(nextIndex);
             return;
@@ -249,7 +313,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     if (!sessionData || !sessionData.verbs[currentQuestionIndex]) return null;
 
     const verb = sessionData.verbs[currentQuestionIndex];
-    const verbConjugations = conjugations[verb.id] || [];
+    const verbConjugations = getFilteredConjugations(conjugations[verb.id] || []).filter(isUsableConjugation);
 
     if (verbConjugations.length === 0) return null;
 
@@ -296,6 +360,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
   const handleMultipleChoiceSelect = (option) => {
     setSelectedMultipleChoice(option);
     setUserAnswer(option);
+    playOptionAudio(option);
   };
 
   // Submit smart practice answer
@@ -388,7 +453,9 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
 
     // Generate question client-side (instant, no API call)
     generateSmartQuestion();
-  }, [sessionData, practiceMode, currentQuestionIndex, conjugations, showResult]);
+  }, [sessionData, practiceMode, currentQuestionIndex, showResult]);
+
+  const question = getCurrentQuestion();
 
   useEffect(() => {
     if (!autoPlayAudio) return;
@@ -399,7 +466,9 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlayAudio, question?.conjugation?.id, smartQuestion?.conjugation?.id]);
 
-  const question = getCurrentQuestion();
+  const activeQuestion = smartQuestion || question;
+  const activeVerbText = activeQuestion?.verb?.infinitive || '';
+  const greeklishVerb = toGreeklish(activeVerbText);
 
   const updateConjugationAudioUrl = (conjugationId, audioUrl) => {
     setConjugations(prev => {
@@ -413,17 +482,24 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
     });
   };
 
-  const playConjugationAudio = async () => {
-    const activeQuestion = smartQuestion || question;
-    if (!activeQuestion?.conjugation?.id) return;
+  const stopAudioPlayback = () => {
+    if (!audioRef.current) return;
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    audioRef.current = null;
+  };
+
+  const playAudioForConjugation = async (conjugation) => {
+    if (!conjugation || audioLoading) return;
 
     setAudioLoading(true);
+    stopAudioPlayback();
     try {
-      let audioUrl = activeQuestion.conjugation.audio_url;
+      let audioUrl = conjugation.audio_url;
       if (!audioUrl) {
-        const response = await audioService.generateConjugationAudio(activeQuestion.conjugation.id);
+        const response = await audioService.generateConjugationAudio(conjugation.id);
         audioUrl = response.audio_url;
-        updateConjugationAudioUrl(activeQuestion.conjugation.id, audioUrl);
+        updateConjugationAudioUrl(conjugation.id, audioUrl);
       }
 
       if (audioUrl) {
@@ -431,12 +507,43 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
           ? `${API_BASE_URL}${audioUrl.replace('/api', '')}`
           : audioUrl;
         const audio = new Audio(resolvedUrl);
+        audioRef.current = audio;
         await audio.play();
       }
     } catch (error) {
       console.error('Failed to play audio:', error);
     } finally {
       setAudioLoading(false);
+    }
+  };
+
+  const getBaseConjugation = (verb, verbConjugations, fallbackConjugation) => {
+    if (!verb) return fallbackConjugation;
+    const baseMatch = verbConjugations.find((conj) => conj.form === verb.infinitive);
+    return baseMatch || fallbackConjugation;
+  };
+
+  const playConjugationAudio = async () => {
+    const activeQuestion = smartQuestion || question;
+    if (!activeQuestion?.verb || !activeQuestion?.conjugation) return;
+
+    const verbConjugations = getFilteredConjugations(conjugations[activeQuestion.verb.id] || []);
+    const baseConjugation = getBaseConjugation(
+      activeQuestion.verb,
+      verbConjugations,
+      activeQuestion.conjugation
+    );
+    await playAudioForConjugation(baseConjugation);
+  };
+
+  const playOptionAudio = async (optionForm) => {
+    const activeQuestion = smartQuestion || question;
+    if (!activeQuestion?.verb || !optionForm) return;
+
+    const verbConjugations = getFilteredConjugations(conjugations[activeQuestion.verb.id] || []);
+    const selectedConjugation = verbConjugations.find((conj) => conj.form === optionForm);
+    if (selectedConjugation) {
+      await playAudioForConjugation(selectedConjugation);
     }
   };
 
@@ -792,26 +899,41 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
                   <div className="text-white/80 text-sm mb-2 flex items-center justify-between">
                     {smartQuestion.type === 'multiple_choice' ? '📝 Multiple Choice' : '✍️ Conjugate'}
-                    <button
-                      onClick={playConjugationAudio}
-                      disabled={audioLoading}
-                      className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
-                    >
-                      {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs text-white/80">
+                        <span>Autoplay</span>
+                        <input
+                          type="checkbox"
+                          checked={autoPlayAudio}
+                          onChange={(e) => setAutoPlayAudio(e.target.checked)}
+                          className="accent-emerald-500"
+                        />
+                      </label>
+                      <button
+                        onClick={playConjugationAudio}
+                        disabled={audioLoading}
+                        className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
+                      >
+                        {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="text-center mb-4">
                     <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
                       {smartQuestion.verb.infinitive}
                     </span>
+                    {greeklishVerb && (
+                      <p className="text-white/70 text-base mt-1">{greeklishVerb}</p>
+                    )}
                     <p className="text-white/70 mt-1">"{smartQuestion.translation}"</p>
                   </div>
                   <div className="text-center text-sm bg-white/10 rounded-lg p-3">
                     <ConjugationPrompt
-                      tense={smartQuestion.tense || 'present'}
-                      mood={smartQuestion.mood || 'indicative'}
-                      voice={smartQuestion.voice}
-                      number={smartQuestion.number || 'singular'}
+                      tense={smartQuestion.conjugation?.tense}
+                      mood={smartQuestion.conjugation?.mood}
+                      voice={smartQuestion.conjugation?.voice}
+                      person={smartQuestion.conjugation?.person}
+                      number={smartQuestion.conjugation?.number}
                       form={smartQuestion.correct_answer}
                     />
                     <p className="text-white/50 text-xs mt-2">💡 Hover over underlined terms for definitions</p>
@@ -825,18 +947,32 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 mb-4">
                   <div className="text-white/80 text-sm mb-2 flex items-center justify-between">
                     <span>📝 Which form matches?</span>
-                    <button
-                      onClick={playConjugationAudio}
-                      disabled={audioLoading}
-                      className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
-                    >
-                      {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 text-xs text-white/80">
+                        <span>Autoplay</span>
+                        <input
+                          type="checkbox"
+                          checked={autoPlayAudio}
+                          onChange={(e) => setAutoPlayAudio(e.target.checked)}
+                          className="accent-emerald-500"
+                        />
+                      </label>
+                      <button
+                        onClick={playConjugationAudio}
+                        disabled={audioLoading}
+                        className="text-white/90 text-sm px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50 btn-press"
+                      >
+                        {audioLoading ? 'Loading…' : <span className="text-base">🔊</span>} <span>Play</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="text-center mb-4">
                     <span className="text-3xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
                       {question.verb.infinitive}
                     </span>
+                    {greeklishVerb && (
+                      <p className="text-white/70 text-base mt-1">{greeklishVerb}</p>
+                    )}
                     <p className="text-white/70 mt-1">"{question.verb.english}"</p>
                   </div>
                   <div className="text-center text-sm bg-white/10 rounded-lg p-3">
@@ -845,6 +981,7 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
                       tense={question.conjugation.tense}
                       mood={question.conjugation.mood}
                       voice={question.conjugation.voice}
+                      person={question.conjugation.person}
                       number={question.conjugation.number}
                       form={question.conjugation.form}
                     />
@@ -883,32 +1020,46 @@ const PracticeSession = ({ user, onBackToHome, settings = {} }) => {
             ) : (
               /* Enhanced result display */
               <div className="mb-6">
-                <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border`}>
+                <div
+                  className={`p-4 rounded-xl mb-4 border ${
+                    isCorrect
+                      ? 'bg-emerald-500/10 border-emerald-500/40'
+                      : 'bg-rose-500/10 border-rose-500/40'
+                  }`}
+                >
                   <div className="flex items-center mb-3">
                     <span className="text-2xl mr-2">{isCorrect ? '✅' : '❌'}</span>
-                    <span className={`font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}`}>
+                    <span className={`font-bold ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
                       {validationResult?.feedback || (isCorrect ? 'Correct!' : 'Incorrect')}
                     </span>
                   </div>
 
-                  <div className="space-y-2">
-                    <p><strong>Your answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{userAnswer}</span></p>
+                  <div className="space-y-2 text-slate-200">
+                    <p>
+                      <strong className="text-slate-300">Your answer:</strong>{' '}
+                      <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{userAnswer}</span>
+                    </p>
                     {!isCorrect && (
-                      <p><strong>Correct answer:</strong> <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{question.conjugation.form}</span></p>
+                      <p>
+                        <strong className="text-slate-300">Correct answer:</strong>{' '}
+                        <span style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                          {activeQuestion?.correct_answer || activeQuestion?.conjugation?.form || ''}
+                        </span>
+                      </p>
                     )}
 
                     {/* Show similarity score and suggestions from enhanced validation */}
                     {validationResult && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="mt-3 pt-3 border-t border-slate-700/60">
                         {validationResult.similarity_score !== undefined && (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-slate-400">
                             <strong>Similarity:</strong> {Math.round(validationResult.similarity_score * 100)}%
                           </p>
                         )}
                         {validationResult.suggestions && validationResult.suggestions.length > 0 && (
                           <div className="mt-2">
-                            <p className="text-sm text-gray-600"><strong>Suggestions:</strong></p>
-                            <ul className="text-sm text-gray-600 ml-4">
+                            <p className="text-sm text-slate-400"><strong>Suggestions:</strong></p>
+                            <ul className="text-sm text-slate-400 ml-4">
                               {validationResult.suggestions.map((suggestion, index) => (
                                 <li key={index}>• {suggestion}</li>
                               ))}

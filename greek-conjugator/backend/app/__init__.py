@@ -27,7 +27,7 @@ def create_app():
     # Audio generation configuration
     app.config['AUDIO_CACHE_DIR'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'audio_cache')
     app.config['TTS_RPM_LIMIT'] = int(os.environ.get('TTS_RPM_LIMIT', '60'))
-    app.config['TTS_DAILY_CHAR_LIMIT'] = int(os.environ.get('TTS_DAILY_CHAR_LIMIT', '50000'))
+    app.config['TTS_DAILY_CHAR_LIMIT'] = int(os.environ.get('TTS_DAILY_CHAR_LIMIT', '10000000'))
 
     # Initialize database
     from .models import db

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { vocabularyService, audioService, API_BASE_URL } from '../services/api';
 import { playChime, playBloop, playClick } from '../services/sound';
+import { toGreeklish } from '../utils/greeklish';
 
 const VocabularyPractice = ({ user, onBackToHome }) => {
   // Practice state
@@ -279,6 +280,10 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
     playWordAudio();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlayAudio, currentQuestion?.word_id]);
+
+  const greeklishQuestion = direction === 'greek_to_english'
+    ? toGreeklish(currentQuestion?.question || '')
+    : '';
 
   const playWordAudio = async () => {
     if (!currentQuestion?.word_id) return;
@@ -762,6 +767,9 @@ const VocabularyPractice = ({ user, onBackToHome }) => {
                 </div>
               </div>
               <div className="text-3xl font-bold">{currentQuestion.question}</div>
+              {greeklishQuestion && (
+                <div className="text-base text-white/80 mt-1">{greeklishQuestion}</div>
+              )}
               <div className="text-sm opacity-80 mt-2">
                 ({currentQuestion.word_type})
               </div>

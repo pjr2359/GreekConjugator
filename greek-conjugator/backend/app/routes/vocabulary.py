@@ -11,6 +11,7 @@ from .auth import login_required
 from ..services.greek_text import compare_greek_texts
 from datetime import datetime, timedelta
 import random
+import re
 
 bp = Blueprint('vocabulary', __name__, url_prefix='/api/vocabulary')
 
@@ -602,6 +603,25 @@ def get_question():
         
         # Generate multiple choice options if requested
         if question_type == 'multiple_choice':
+            def _normalize_option(text):
+                if not text:
+                    return ""
+                normalized = text.lower().strip()
+                normalized = re.sub(r'[^\w\s]', '', normalized)
+                normalized = re.sub(r'\s+', ' ', normalized)
+                return normalized
+
+            def _is_distinct(candidate, existing_norms):
+                candidate_norm = _normalize_option(candidate)
+                if not candidate_norm:
+                    return False
+                if candidate_norm in existing_norms:
+                    return False
+                for norm in existing_norms:
+                    if candidate_norm in norm or norm in candidate_norm:
+                        return False
+                return True
+
             # Get similar words for wrong answers - prioritize common words with clean translations
             if direction == 'greek_to_english':
                 # Get other English translations as wrong answers
@@ -637,24 +657,69 @@ def get_question():
                     LIMIT 10
                 """
             
-            wrong_results = db.session.execute(
-                db.text(wrong_query),
-                {"word_id": word_id, "word_type": word['word_type']}
-            ).fetchall()
-            
+            def _collect_wrong_answers(query, params, existing_norms, answers, limit=3):
+                results = db.session.execute(db.text(query), params).fetchall()
+                for row in results:
+                    answer = row[0].split(';')[0].strip()
+                    if (answer.lower() != correct_answer.lower()
+                        and len(answer) > 1
+                        and len(answer) < 60
+                        and 'of ' not in answer.lower()[:10]  # Skip "plural of", etc.
+                        and _is_distinct(answer, existing_norms)
+                        and answer not in answers):
+                        answers.append(answer)
+                        existing_norms.add(_normalize_option(answer))
+                    if len(answers) >= limit:
+                        break
+
             # Clean up wrong answers - take first meaning only, filter bad ones
             wrong_answers = []
-            for row in wrong_results:
-                answer = row[0].split(';')[0].strip()
-                # Skip if too similar to correct answer or looks like garbage
-                if (answer.lower() != correct_answer.lower() 
-                    and len(answer) > 1 
-                    and len(answer) < 50
-                    and 'of ' not in answer.lower()[:10]  # Skip "plural of", etc.
-                    and answer not in wrong_answers):
-                    wrong_answers.append(answer)
-                if len(wrong_answers) >= 3:
-                    break
+            wrong_answer_norms = {_normalize_option(correct_answer)}
+            _collect_wrong_answers(
+                wrong_query,
+                {"word_id": word_id, "word_type": word['word_type']},
+                wrong_answer_norms,
+                wrong_answers
+            )
+
+            # Fallback: broaden search if we don't have enough distinct options
+            if len(wrong_answers) < 3:
+                if direction == 'greek_to_english':
+                    fallback_query = """
+                        SELECT english FROM common_words
+                        WHERE id != :word_id
+                          AND length(english) > 2
+                          AND length(english) < 80
+                          AND english NOT LIKE '%singular of%'
+                          AND english NOT LIKE '%plural of%'
+                          AND english NOT LIKE '%person %'
+                          AND english NOT LIKE '%tense%'
+                          AND english NOT LIKE '%;%'
+                          AND english NOT LIKE '%misspelling%'
+                          AND english NOT LIKE '%contraction%'
+                          AND english NOT LIKE '%alternative%'
+                          AND english NOT LIKE '%spelling of%'
+                          AND english NOT LIKE '%form of%'
+                        ORDER BY RANDOM()
+                        LIMIT 200
+                    """
+                else:
+                    fallback_query = """
+                        SELECT word FROM common_words
+                        WHERE id != :word_id
+                        ORDER BY RANDOM()
+                        LIMIT 200
+                    """
+
+                _collect_wrong_answers(
+                    fallback_query,
+                    {"word_id": word_id},
+                    wrong_answer_norms,
+                    wrong_answers
+                )
+
+            if len(wrong_answers) < 3:
+                return jsonify({'error': 'Insufficient distinct options for multiple choice'}), 500
             
             # Combine and shuffle options
             options = [correct_answer] + wrong_answers[:3]
