@@ -495,6 +495,12 @@ private.key
 greek-conjugator/kaikki.org-dictionary-Greek.jsonl
 kaikki.org-dictionary-Greek.jsonl
 
+# Wiktextract workspace and outputs
+wiktextract/
+wiktextract_el*.jsonl
+greek_verbs_wiktextract*.jsonl
+wiktextract_el_test.jsonl
+
 
 
 # Comments for future developers
