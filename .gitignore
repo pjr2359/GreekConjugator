@@ -501,6 +501,17 @@ wiktextract_el*.jsonl
 greek_verbs_wiktextract*.jsonl
 wiktextract_el_test.jsonl
 
+# Wiktionary dumps
+*wiktionary-*-pages-articles.xml.bz2
+
+# Wiktextract DB files
+enwiktionary*.db
+enwiktionary*.db-*
+enwiktionary_thesaurus.db
+enwiktionary_thesaurus.db-*
+
+enwiktionary_greek_verbs.jsonl
+elwiktionary_sample.jsonl
 
 
 # Comments for future developers
