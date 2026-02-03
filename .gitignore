@@ -500,6 +500,7 @@ wiktextract/
 wiktextract_el*.jsonl
 greek_verbs_wiktextract*.jsonl
 wiktextract_el_test.jsonl
+wiktextract_chunks/
 
 # Wiktionary dumps
 *wiktionary-*-pages-articles.xml.bz2
@@ -512,6 +513,12 @@ enwiktionary_thesaurus.db-*
 
 enwiktionary_greek_verbs.jsonl
 elwiktionary_sample.jsonl
+
+# Data outputs and intermediate files
+scripts/data/*.json
+scripts/data/*.jsonl
+morph_extraction_*.json
+greek-conjugator/extracted_verbs.json
 
 
 # Comments for future developers
