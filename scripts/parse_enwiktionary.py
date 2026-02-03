@@ -14,12 +14,17 @@ import json
 import re
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 LANG_HEADING_PATTERN = re.compile(
     r"^\s*(=+)\s*([^=].*?)\s*\1\s*$",
     re.MULTILINE,
 )
 GREEK_HEADING = "Greek"
+ANCIENT_GREEK_MARKER = re.compile(
+    r"\bAncient Greek\b|\{\{\s*(?:m|lang|grc)\s*\|\s*grc\b",
+    re.IGNORECASE,
+)
 
 CONJ_TEMPLATE_PREFIXES = ("el-conj", "el-verb")
 CONJ_TEMPLATE_EXACT = {
@@ -196,6 +201,10 @@ def extract_records(
     limit: int | None = None,
     max_pages: int | None = None,
     progress_every: int | None = None,
+    skip_pages: int = 0,
+    checkpoint_every: int | None = None,
+    checkpoint_path: str | None = None,
+    exclude_ancient: bool = True,
     emit_empty: bool = False,
     include_text: bool = False,
     text_limit: int | None = None,
@@ -204,11 +213,24 @@ def extract_records(
     scanned = 0
     for title, ns, text in iter_pages(dump_path):
         scanned += 1
+        if skip_pages and scanned <= skip_pages:
+            continue
         if progress_every and scanned % progress_every == 0:
             print(
                 f"scanned={scanned} matched={count} last_title={title}",
                 file=sys.stderr,
             )
+        if checkpoint_every and checkpoint_path and scanned % checkpoint_every == 0:
+            Path(checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(checkpoint_path, "w", encoding="utf-8") as checkpoint:
+                json.dump(
+                    {
+                        "scanned": scanned,
+                        "matched": count,
+                        "last_title": title,
+                    },
+                    checkpoint,
+                )
         if max_pages and scanned >= max_pages:
             break
         if ns != "0":
@@ -229,6 +251,8 @@ def extract_records(
         verb_payload = []
         has_conj_data = False
         for verb_section in verb_sections:
+            if exclude_ancient and ANCIENT_GREEK_MARKER.search(verb_section["text"]):
+                continue
             templates = extract_templates(verb_section["text"])
             parsed_templates = [parse_template(t) for t in templates]
             conjugation_templates = [
@@ -248,6 +272,9 @@ def extract_records(
                 else:
                     payload["text"] = verb_section["text"][:text_limit]
             verb_payload.append(payload)
+
+        if not verb_payload:
+            continue
 
         if has_conj_data or emit_empty:
             yield {
@@ -280,6 +307,28 @@ def main():
         help="Log progress every N pages (stderr)",
     )
     parser.add_argument(
+        "--skip-pages",
+        type=int,
+        default=0,
+        help="Skip the first N pages (for chunking/resume)",
+    )
+    parser.add_argument(
+        "--checkpoint-every",
+        type=int,
+        default=None,
+        help="Write a checkpoint JSON every N scanned pages",
+    )
+    parser.add_argument(
+        "--checkpoint-path",
+        default=None,
+        help="Path to write checkpoint JSON (used with --checkpoint-every)",
+    )
+    parser.add_argument(
+        "--include-ancient",
+        action="store_true",
+        help="Include Ancient Greek references inside Greek verb sections",
+    )
+    parser.add_argument(
         "--emit-empty",
         action="store_true",
         help="Emit verb sections even without conjugation templates/tables",
@@ -303,6 +352,10 @@ def main():
             limit=args.limit,
             max_pages=args.max_pages,
             progress_every=args.progress_every,
+            skip_pages=args.skip_pages,
+            checkpoint_every=args.checkpoint_every,
+            checkpoint_path=args.checkpoint_path,
+            exclude_ancient=not args.include_ancient,
             emit_empty=args.emit_empty,
             include_text=args.include_text,
             text_limit=args.text_limit if args.include_text else None,

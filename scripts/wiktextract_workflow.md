@@ -18,10 +18,38 @@ Run expansion (Greek only, English Wiktionary edition)
   wiktextract_el.jsonl \
   4
 
+Chunked, resumable extraction (no Lua expansion)
+./scripts/run_parse_chunks.py \
+  --dump enwiktionary-20260101-pages-articles.xml.bz2 \
+  --out-dir wiktextract_chunks \
+  --chunk-pages 50000 \
+  --progress-every 10000 \
+  --checkpoint-every 10000
+
+Resume after interruption:
+./scripts/run_parse_chunks.py \
+  --dump enwiktionary-20260101-pages-articles.xml.bz2 \
+  --out-dir wiktextract_chunks \
+  --resume
+
+Generate core indicative conjugations from a lexicon:
+./scripts/generate_conjugations_from_lexicon.py \
+  --lexicon scripts/data/verb_lexicon.json \
+  --irregulars scripts/data/philologist_irregulars.json \
+  --out scripts/data/generated_conjugations.jsonl
+
+Update irregulars dataset:
+./scripts/scrape_philologist_irregulars.py \
+  --out scripts/data/philologist_irregulars.json
+
 Notes:
 - `--language-name Greek` limits extraction to Greek entries.
 - `--all` enables inflections and expands tables.
 - Use a small `--num-processes` on limited RAM (about 4-10GB per process).
+ - Chunked extraction uses `scripts/run_parse_chunks.py` and does not expand Lua.
+ - Chunked extraction excludes Ancient Greek references by default
+   (use `--include-ancient` to opt in).
+ - Generator uses `scripts/data/verb_lexicon.json` entries with explicit stems.
 
 Next step: parse output JSONL for Greek verbs and their forms.
 Use `scripts/parse_wiktextract_greek_verbs.py` once generated.
