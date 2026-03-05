@@ -18,6 +18,7 @@ from app.services.greek_conjugation_generator import (  # noqa: E402
     generate_conjugations,
     load_irregulars,
     load_lexicon,
+    normalize_lemma,
 )
 
 
@@ -26,6 +27,11 @@ def main() -> None:
     parser.add_argument("--lexicon", default="scripts/data/verb_lexicon.json")
     parser.add_argument("--irregulars", default="scripts/data/philologist_irregulars.json")
     parser.add_argument("--out", default="scripts/data/generated_conjugations.jsonl")
+    parser.add_argument(
+        "--include-irregulars",
+        action="store_true",
+        help="Include lemmas listed in philologist irregulars.",
+    )
     args = parser.parse_args()
 
     lexicon = load_lexicon(args.lexicon)
@@ -36,6 +42,10 @@ def main() -> None:
 
     with out_path.open("w", encoding="utf-8") as handle:
         for entry in lexicon.values():
+            if not args.include_irregulars:
+                normalized = normalize_lemma(entry.lemma)
+                if irregulars.get(normalized):
+                    continue
             forms = generate_conjugations(entry.lemma, lexicon, irregulars)
             for form in forms:
                 handle.write(json.dumps(form, ensure_ascii=False) + "\n")

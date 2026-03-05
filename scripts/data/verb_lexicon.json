@@ -7,9 +7,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "έρχ",
-        "perfective_passive": "ήρθ"
+        "perfective_passive": "ήρθ",
+        "perfective_active": "ήρθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -26,18 +27,20 @@
       "class_id": "A",
       "stems": {
         "imperfective": "αισθάν",
-        "perfective_passive": "αισθάνθ"
+        "perfective_passive": "αισθάνθ",
+        "perfective_active": "αισθάνθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
       "lemma": "ακούω",
       "class_id": "A",
       "stems": {
-        "imperfective": "ακού"
+        "imperfective": "ακού",
+        "perfective_active": "άκου"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -47,7 +50,7 @@
         "imperfective": "αμφιβάλλ",
         "perfective_active": "αμφέβαλ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -77,7 +80,7 @@
         "imperfective": "ανησυχ",
         "perfective_active": "ανησύχ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -87,7 +90,7 @@
         "imperfective": "αντέχ",
         "perfective_active": "άντεξ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -106,7 +109,7 @@
         "imperfective": "αρχίζ",
         "perfective_active": "άρχισ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -117,7 +120,7 @@
         "perfective_active": "έβαλ",
         "perfective_passive": "βάλθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -128,7 +131,7 @@
         "perfective_active": "έβγαλ",
         "perfective_passive": "βγάλθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -149,7 +152,7 @@
         "perfective_active": "είδ",
         "perfective_passive": "ειδώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -160,7 +163,7 @@
         "perfective_active": "γνώρισ",
         "perfective_passive": "γνωρίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -181,7 +184,7 @@
         "perfective_active": "διάβασ",
         "perfective_passive": "διαβάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -198,7 +201,7 @@
         "imperfective": "εκτιμ",
         "perfective_active": "εκτίμ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -208,7 +211,7 @@
         "imperfective": "ελπίζ",
         "perfective_active": "έλπισ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -229,7 +232,7 @@
         "perfective_active": "επέστρεψ",
         "perfective_passive": "επιστράφ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -239,7 +242,7 @@
         "imperfective": "ευχαριστ",
         "perfective_active": "ευχαρίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -247,9 +250,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "εύχ",
-        "perfective_passive": "ευχήθ"
+        "perfective_passive": "ευχήθ",
+        "perfective_active": "ευχήθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -259,7 +263,7 @@
         "imperfective": "ζ",
         "perfective_active": "έζ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -269,14 +273,16 @@
         "imperfective": "θέλ",
         "perfective_active": "θέλησ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
       "lemma": "κάθομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "κάθι"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -286,7 +292,7 @@
         "imperfective": "κάν",
         "perfective_active": "έκαν"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -296,18 +302,7 @@
         "imperfective": "καταλαβαίν",
         "perfective_active": "κατάλαβ"
       },
-      "aorist_type": null,
-      "provenance": "morph_dict"
-    },
-    {
-      "lemma": "καταφέρω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "καταφέρ",
-        "perfective_active": "κατέφερ",
-        "perfective_passive": "καταφέρθ"
-      },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -317,7 +312,7 @@
         "imperfective": "μέν",
         "perfective_active": "έμειν"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -327,7 +322,7 @@
         "imperfective": "μισ",
         "perfective_active": "μίσ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -337,7 +332,7 @@
         "imperfective": "μπορ",
         "perfective_active": "μπόρ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -364,9 +359,10 @@
       "lemma": "ξέρω",
       "class_id": "A",
       "stems": {
-        "imperfective": "ξέρ"
+        "imperfective": "ξέρ",
+        "perfective_active": "ήξερ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -380,9 +376,10 @@
       "lemma": "πάω",
       "class_id": "B1",
       "stems": {
-        "imperfective": "π"
+        "imperfective": "π",
+        "perfective_active": "πήγ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -393,16 +390,17 @@
         "perfective_active": "ήπι",
         "perfective_passive": "πιώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
       "lemma": "περιμένω",
       "class_id": "A",
       "stems": {
-        "imperfective": "περιμέν"
+        "imperfective": "περιμέν",
+        "perfective_active": "περίμειν"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -422,7 +420,7 @@
         "perfective_active": "πίστεψ",
         "perfective_passive": "πιστεύτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -433,7 +431,7 @@
         "perfective_active": "πρόσεξ",
         "perfective_passive": "προσέχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -443,7 +441,7 @@
         "imperfective": "προσπαθ",
         "perfective_active": "προσπάθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -465,16 +463,17 @@
         "perfective_active": "πρότειν",
         "perfective_passive": "προτάθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
       "lemma": "προτιμώ",
       "class_id": "B1",
       "stems": {
-        "imperfective": "προτιμ"
+        "imperfective": "προτιμ",
+        "perfective_active": "προτίμη"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -482,18 +481,20 @@
       "class_id": "A",
       "stems": {
         "imperfective": "σκέφτ",
-        "perfective_passive": "σκέφτ"
+        "perfective_passive": "σκέφτ",
+        "perfective_active": "σκέφτηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
       "lemma": "τρώω",
       "class_id": "A",
       "stems": {
-        "imperfective": "τρώ"
+        "imperfective": "τρώ",
+        "perfective_active": "έφαγ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -501,9 +502,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "υπόσχ",
-        "perfective_passive": "υποσχέθ"
+        "perfective_passive": "υποσχέθ",
+        "perfective_active": "υποσχέθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -520,16 +522,17 @@
         "imperfective": "φεύγ",
         "perfective_active": "έφυγ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
       "lemma": "φοβάμαι",
       "class_id": "A",
       "stems": {
-        "imperfective": "φοβ"
+        "imperfective": "φοβ",
+        "perfective_active": "φοβήθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -547,9 +550,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "χαίρ",
-        "perfective_passive": "χάρ"
+        "perfective_passive": "χάρ",
+        "perfective_active": "χάρηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -557,9 +561,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "χρειάζ",
-        "perfective_passive": "χρειάστ"
+        "perfective_passive": "χρειάστ",
+        "perfective_active": "χρειάστηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "morph_dict"
     },
     {
@@ -581,7 +586,7 @@
         "perfective_active": "έγραψ",
         "perfective_passive": "γράφτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -613,7 +618,7 @@
         "perfective_active": "θεράπευσ",
         "perfective_passive": "θεραπεύτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -647,17 +652,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "φέρω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "φέρ",
-        "perfective_active": "έφερ",
-        "perfective_passive": "φέρθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "ψεύδομαι",
       "class_id": "A",
       "stems": {
@@ -675,7 +669,7 @@
         "perfective_active": "καθάρισ",
         "perfective_passive": "καθαρίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -737,7 +731,7 @@
         "perfective_active": "έπεισ",
         "perfective_passive": "πείστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -891,8 +885,11 @@
     {
       "lemma": "αγαπώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "αγαπ",
+        "perfective_active": "αγάπη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -982,16 +979,20 @@
       "lemma": "θυμάμαι",
       "class_id": "A",
       "stems": {
-        "imperfective": "θυμ"
+        "imperfective": "θυμ",
+        "perfective_active": "θυμήθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
       "lemma": "λέω",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "λέ",
+        "perfective_active": "είπ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1007,8 +1008,11 @@
     {
       "lemma": "μιλώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "μιλ",
+        "perfective_active": "μίλη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1018,7 +1022,7 @@
         "imperfective": "υπάρχ",
         "perfective_active": "υπήρξ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1208,7 +1212,7 @@
         "perfective_active": "έκλεισ",
         "perfective_passive": "κλείστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1282,7 +1286,7 @@
         "perfective_active": "τελείωσ",
         "perfective_passive": "τελειώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1387,7 +1391,7 @@
         "imperfective": "μιλ",
         "perfective_active": "μίλ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1415,7 +1419,7 @@
         "perfective_active": "άνοιξ",
         "perfective_passive": "ανοίχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1437,7 +1441,7 @@
         "perfective_active": "σχεδίασ",
         "perfective_passive": "σχεδιάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1477,7 +1481,7 @@
         "perfective_active": "κέρδισ",
         "perfective_passive": "κερδήθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1691,17 +1695,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "παραγγέλλω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "παραγγέλλ",
-        "perfective_active": "παρήγγειλ",
-        "perfective_passive": "παραγγέλθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "αθροίζω",
       "class_id": "A",
       "stems": {
@@ -1787,7 +1780,7 @@
         "imperfective": "μπαίν",
         "perfective_active": "μπήκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1830,7 +1823,7 @@
         "imperfective": "οδηγ",
         "perfective_active": "οδήγ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1923,7 +1916,7 @@
         "imperfective": "προειδοποι",
         "perfective_active": "προειδοποί"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -1951,7 +1944,7 @@
         "imperfective": "τρέχ",
         "perfective_active": "έτρεξ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2154,9 +2147,10 @@
       "lemma": "αρνούμαι",
       "class_id": "A",
       "stems": {
-        "imperfective": "αρν"
+        "imperfective": "αρν",
+        "perfective_active": "αρνήθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2273,7 +2267,7 @@
         "perfective_active": "απαγόρευσ",
         "perfective_passive": "απαγορεύτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2380,7 +2374,7 @@
         "imperfective": "δημιουργ",
         "perfective_active": "δημιούργ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2405,9 +2399,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "φαίν",
-        "perfective_passive": "φάν"
+        "perfective_passive": "φάν",
+        "perfective_active": "φάνηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2418,7 +2413,7 @@
         "perfective_active": "έφτασ",
         "perfective_passive": "φτάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2428,14 +2423,17 @@
         "imperfective": "ανεβαίν",
         "perfective_active": "ανέβηκ\n<!-- extras -->\n<!-- imperatives -->"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
       "lemma": "ζητώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "ζητ",
+        "perfective_active": "ζήτη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2470,7 +2468,7 @@
         "perfective_active": "έφερ",
         "perfective_passive": "φέρθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2481,7 +2479,7 @@
         "perfective_active": "αγόρασ",
         "perfective_passive": "αγοράστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2499,7 +2497,7 @@
         "perfective_active": "συνέχισ",
         "perfective_passive": "συνεχίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2585,7 +2583,7 @@
         "perfective_active": "γύρισ",
         "perfective_passive": "γυρίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2634,8 +2632,11 @@
     {
       "lemma": "αντικαθιστώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "αντικαθιστ",
+        "perfective_active": "αντικατέστη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -2777,8 +2778,10 @@
     {
       "lemma": "εξαφανίζομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "εξαφανίστηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3015,7 +3018,7 @@
         "perfective_active": "απέφυγ",
         "perfective_passive": "αποφεύχθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3172,7 +3175,7 @@
         "perfective_active": "μαγείρεψ",
         "perfective_passive": "μαγειρεύτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3340,7 +3343,7 @@
         "perfective_active": "έλεγξ",
         "perfective_passive": "ελέγχθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3442,7 +3445,7 @@
         "perfective_active": "ψώνισ",
         "perfective_passive": "ψωνίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3450,9 +3453,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "στέκ",
-        "perfective_passive": "στάθ"
+        "perfective_passive": "στάθ",
+        "perfective_active": "στάθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3474,7 +3478,7 @@
         "perfective_active": "έπλυν",
         "perfective_passive": "πλύθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3524,7 +3528,7 @@
         "perfective_active": "αντιμετώπισ",
         "perfective_passive": "αντιμετωπίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3570,7 +3574,7 @@
         "perfective_active": "αποφάσισ",
         "perfective_passive": "αποφασίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3588,7 +3592,7 @@
         "perfective_active": "άφησ",
         "perfective_passive": "αφέθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3626,7 +3630,7 @@
         "perfective_active": "βελτίωσ",
         "perfective_passive": "βελτιώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3727,7 +3731,7 @@
         "perfective_active": "θαύμασ",
         "perfective_passive": "θαυμάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3785,7 +3789,7 @@
         "imperfective": "θυμών",
         "perfective_active": "θύμωσ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -3915,8 +3919,11 @@
     {
       "lemma": "φιλώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "φιλ",
+        "perfective_active": "φίλη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -4023,7 +4030,7 @@
         "imperfective": "χρησιμοποι",
         "perfective_active": "χρησιμοποί"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -4034,7 +4041,7 @@
         "perfective_active": "έδωσ",
         "perfective_passive": "δόθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -4629,7 +4636,7 @@
         "perfective_active": "άλλαξ",
         "perfective_passive": "αλλάχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -4640,7 +4647,7 @@
         "perfective_active": "δοκίμασ",
         "perfective_passive": "δοκιμάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -4962,17 +4969,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "ακούγω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "ακούγ",
-        "perfective_active": "άκουσ",
-        "perfective_passive": "ακούστ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "διψώ",
       "class_id": "A",
       "stems": {},
@@ -5043,17 +5039,6 @@
       "lemma": "θανατώνω",
       "class_id": "A",
       "stems": {},
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
-      "lemma": "δίδω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "δίδ",
-        "perfective_active": "έδωσ",
-        "perfective_passive": "δόθ"
-      },
       "aorist_type": null,
       "provenance": "wiktextract"
     },
@@ -5277,7 +5262,7 @@
         "perfective_active": "έψαξ",
         "perfective_passive": "ψάχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -5515,7 +5500,7 @@
         "perfective_active": "άγγιξ",
         "perfective_passive": "αγγίχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -5663,7 +5648,7 @@
         "perfective_active": "πλήρωσ",
         "perfective_passive": "πληρώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6447,7 +6432,7 @@
         "perfective_active": "πηρ",
         "perfective_passive": "πάρθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6501,7 +6486,7 @@
         "perfective_active": "έχασ",
         "perfective_passive": "χάθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6529,14 +6514,17 @@
         "imperfective": "απαντ",
         "perfective_active": "απάντ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
       "lemma": "απαντώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "απαντ",
+        "perfective_active": "απάντη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6658,7 +6646,7 @@
         "perfective_active": "νόμισ",
         "perfective_passive": "νομίσθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6719,7 +6707,7 @@
         "perfective_active": "υποψίασ",
         "perfective_passive": "υποψιάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6730,7 +6718,7 @@
         "perfective_active": "υπολόγισ",
         "perfective_passive": "υπολογίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6769,7 +6757,7 @@
         "perfective_active": "δούλεψ",
         "perfective_passive": "δουλεύτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6925,7 +6913,7 @@
         "imperfective": "κατεβαίν",
         "perfective_active": "κατέβηκ\n<!-- extras -->\n<!-- different from standard -->"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -6975,8 +6963,11 @@
     {
       "lemma": "κλαίω",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "κλαί",
+        "perfective_active": "έκλα"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7045,7 +7036,7 @@
         "perfective_active": "κατέστρεψ",
         "perfective_passive": "καταστράφ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7197,7 +7188,7 @@
         "perfective_active": "κοίταξ",
         "perfective_passive": "κοιτάχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7316,7 +7307,7 @@
         "perfective_active": "έφτιαξ",
         "perfective_passive": "φτιάχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7414,17 +7405,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "ανασταίνω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "ανασταίν",
-        "perfective_active": "ανάστησ",
-        "perfective_passive": "αναστήθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "αναδεικνύω",
       "class_id": "A",
       "stems": {
@@ -7484,7 +7464,7 @@
         "imperfective": "συμφων",
         "perfective_active": "συμφών"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7563,8 +7543,11 @@
     {
       "lemma": "ξεχνώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "ξεχν",
+        "perfective_active": "ξέχα"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7740,7 +7723,7 @@
         "perfective_active": "έκρυψ",
         "perfective_passive": "κρύφτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7813,8 +7796,10 @@
     {
       "lemma": "ελέγχομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "ελέγχθηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -7946,7 +7931,7 @@
         "imperfective": "ταξιδεύ",
         "perfective_active": "ταξίδεψ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -8088,7 +8073,7 @@
         "imperfective": "αφαιρ",
         "perfective_active": "αφαίρ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -8318,7 +8303,7 @@
         "perfective_active": "αναγνώρισ",
         "perfective_passive": "αναγνωρίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -8366,8 +8351,11 @@
     {
       "lemma": "αναζητώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "αναζητ",
+        "perfective_active": "αναζήτη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -9406,9 +9394,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "αποδέχ",
-        "perfective_passive": "αποδέχτ"
+        "perfective_passive": "αποδέχτ",
+        "perfective_active": "αποδέχτηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -9564,17 +9553,6 @@
         "imperfective": "αποκαθιστ",
         "perfective_active": "αποκατέστ",
         "perfective_passive": "αποκαταστάθ\n<!-- compound imperative -->"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
-      "lemma": "αποκατασταίνω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "αποκατασταίν",
-        "perfective_active": "αποκατάστησ",
-        "perfective_passive": "αποκαταστάθ"
       },
       "aorist_type": null,
       "provenance": "wiktextract"
@@ -10620,7 +10598,7 @@
         "imperfective": "αποτυγχάν",
         "perfective_active": "απέτυχ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -10817,8 +10795,10 @@
     {
       "lemma": "ντύνομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "ντήθηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -11004,7 +10984,7 @@
         "perfective_active": "ετοίμασ",
         "perfective_passive": "ετοιμάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -11286,17 +11266,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "αρταίνω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "αρταίν",
-        "perfective_active": "άρτυσ",
-        "perfective_passive": "αρτύθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "αρταίνομαι",
       "class_id": "A",
       "stems": {},
@@ -11311,7 +11280,7 @@
         "perfective_active": "αύξησ",
         "perfective_passive": "αυξήθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -11431,7 +11400,7 @@
         "imperfective": "πετυχαίν",
         "perfective_active": "πέτυχ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -11447,8 +11416,11 @@
     {
       "lemma": "κρατώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "κρατ",
+        "perfective_active": "κράτη"
+      },
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -11734,17 +11706,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "ψέλνω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "ψέλν",
-        "perfective_active": "έψαλ",
-        "perfective_passive": "ψάλθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "λογοκρίνω",
       "class_id": "A",
       "stems": {
@@ -11872,8 +11833,10 @@
     {
       "lemma": "ακούγομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "ακούστηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -12141,7 +12104,7 @@
         "perfective_active": "έσωσ",
         "perfective_passive": "σώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -12375,8 +12338,10 @@
     {
       "lemma": "επιτίθεμαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "επιτέθηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -12404,7 +12369,7 @@
         "imperfective": "φωνάζ",
         "perfective_active": "φώναξ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -12473,7 +12438,7 @@
         "imperfective": "συγχωρ",
         "perfective_active": "συγχώρ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -12654,8 +12619,10 @@
     {
       "lemma": "λυπάμαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "λυπήθηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -13402,7 +13369,7 @@
         "perfective_active": "μείωσ",
         "perfective_passive": "μειώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -13918,7 +13885,7 @@
         "perfective_active": "επηρέασ",
         "perfective_passive": "επηρεάστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -13935,7 +13902,7 @@
         "imperfective": "επιμέν",
         "perfective_active": "επέμειν"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -13963,7 +13930,7 @@
         "imperfective": "θυμίζ",
         "perfective_active": "θύμισ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -14040,7 +14007,7 @@
         "imperfective": "μοιάζ",
         "perfective_active": "έμοιασ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -14197,7 +14164,7 @@
         "perfective_active": "προστάτευσ",
         "perfective_passive": "προστατεύθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -15145,7 +15112,7 @@
         "imperfective": "διαφων",
         "perfective_active": "διαφών"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -15252,7 +15219,7 @@
         "imperfective": "κατηγορ",
         "perfective_active": "κατηγόρ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -15588,7 +15555,7 @@
         "perfective_active": "μύρισ",
         "perfective_passive": "μυρίστ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -15923,8 +15890,10 @@
     {
       "lemma": "ξεκουράζομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "ξεκουράστηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -18100,7 +18069,7 @@
         "perfective_active": "έψησ",
         "perfective_passive": "ψήθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -18443,9 +18412,10 @@
       "lemma": "βαριέμαι",
       "class_id": "A",
       "stems": {
-        "imperfective": "βαρ"
+        "imperfective": "βαρ",
+        "perfective_active": "βαρέθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -18754,7 +18724,7 @@
         "imperfective": "εξηγ",
         "perfective_active": "εξήγ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -19188,7 +19158,7 @@
         "imperfective": "παθαίν",
         "perfective_active": "έπαθ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -19791,9 +19761,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "παραδέχ",
-        "perfective_passive": "παραδέχτ"
+        "perfective_passive": "παραδέχτ",
+        "perfective_active": "παραδέχθηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -22226,7 +22197,7 @@
         "perfective_active": "επέλεξ",
         "perfective_passive": "επιλέχθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -23786,17 +23757,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "ανιδρύω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "ανιδρύ",
-        "perfective_active": "ανίδρυσ",
-        "perfective_passive": "ανιδρύθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "ανιδρύομαι",
       "class_id": "A",
       "stems": {},
@@ -23954,7 +23914,7 @@
         "imperfective": "κινδυνεύ",
         "perfective_active": "κινδύνεψ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -24761,9 +24721,10 @@
       "class_id": "A",
       "stems": {
         "imperfective": "διαχειρίζ",
-        "perfective_passive": "διαχειρίστ"
+        "perfective_passive": "διαχειρίστ",
+        "perfective_active": "διαχειρίστηκ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -28669,7 +28630,7 @@
         "perfective_active": "διόρθωσ",
         "perfective_passive": "διορθώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -32235,7 +32196,7 @@
         "perfective_active": "στήριξ",
         "perfective_passive": "στηρίχτ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -32266,8 +32227,10 @@
     {
       "lemma": "εμφανίζομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "εμφανίστηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -32454,7 +32417,7 @@
         "perfective_active": "ενημέρωσ",
         "perfective_passive": "ενημερώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -32775,7 +32738,7 @@
         "imperfective": "παρατηρ",
         "perfective_active": "παρατήρ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -32829,7 +32792,7 @@
         "perfective_active": "υποστήριξ",
         "perfective_passive": "υποστηρίχθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -33607,8 +33570,10 @@
     {
       "lemma": "εξελίσσομαι",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "perfective_active": "εξελίχθηκ"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -33882,7 +33847,7 @@
         "perfective_active": "οργάνωσ",
         "perfective_passive": "οργανώθ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -34034,7 +33999,7 @@
         "imperfective": "ρισκάρ",
         "perfective_active": "ρισκάρισ"
       },
-      "aorist_type": null,
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -34484,7 +34449,7 @@
         "imperfective": "καθυστερ",
         "perfective_active": "καθυστέρ"
       },
-      "aorist_type": null,
+      "aorist_type": "sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -34822,8 +34787,11 @@
     {
       "lemma": "συγκρίνω",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
+      "stems": {
+        "imperfective": "συγκρίν",
+        "perfective_active": "συνέκριν"
+      },
+      "aorist_type": "non-sigmatic",
       "provenance": "wiktextract"
     },
     {
@@ -36898,17 +36866,6 @@
       "provenance": "wiktextract"
     },
     {
-      "lemma": "εκλύω",
-      "class_id": "A",
-      "stems": {
-        "imperfective": "εκλύ",
-        "perfective_active": "εξέλυσ",
-        "perfective_passive": "εκλύθ"
-      },
-      "aorist_type": null,
-      "provenance": "wiktextract"
-    },
-    {
       "lemma": "επωφελούμαι",
       "class_id": "A",
       "stems": {
@@ -38103,16 +38060,22 @@
     {
       "lemma": "βρίσκω",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
-      "provenance": "kaikki"
+      "stems": {
+        "imperfective": "βρίσκ",
+        "perfective_active": "βρήκ"
+      },
+      "aorist_type": "non-sigmatic",
+      "provenance": "cooljugator"
     },
     {
       "lemma": "παρακαλώ",
       "class_id": "A",
-      "stems": {},
-      "aorist_type": null,
-      "provenance": "kaikki"
+      "stems": {
+        "imperfective": "παρακαλ",
+        "perfective_active": "παρακάλε"
+      },
+      "aorist_type": "sigmatic",
+      "provenance": "cooljugator"
     },
     {
       "lemma": "αγοράσω",
@@ -38337,6 +38300,74 @@
       "stems": {},
       "aorist_type": null,
       "provenance": "kaikki"
+    },
+    {
+      "lemma": "επιτρέπω",
+      "class_id": "A",
+      "stems": {
+        "imperfective": "επιτρέπ",
+        "perfective_active": "επέτρε"
+      },
+      "aorist_type": "sigmatic",
+      "provenance": "cooljugator"
+    },
+    {
+      "lemma": "καλώ",
+      "class_id": "B2",
+      "stems": {
+        "imperfective": "καλ",
+        "perfective_active": "κάλε"
+      },
+      "aorist_type": "sigmatic",
+      "provenance": "cooljugator"
+    },
+    {
+      "lemma": "κοιμάμαι",
+      "class_id": "A",
+      "stems": {
+        "perfective_active": "κοιμήθηκ"
+      },
+      "aorist_type": "non-sigmatic",
+      "provenance": "cooljugator"
+    },
+    {
+      "lemma": "μαθαίνω",
+      "class_id": "A",
+      "stems": {
+        "imperfective": "μαθαίν",
+        "perfective_active": "έμαθ"
+      },
+      "aorist_type": "non-sigmatic",
+      "provenance": "cooljugator"
+    },
+    {
+      "lemma": "προσκαλώ",
+      "class_id": "B2",
+      "stems": {
+        "imperfective": "προσκαλ",
+        "perfective_active": "προσκάλε"
+      },
+      "aorist_type": "sigmatic",
+      "provenance": "cooljugator"
+    },
+    {
+      "lemma": "στέλνω",
+      "class_id": "A",
+      "stems": {
+        "imperfective": "στέλν",
+        "perfective_active": "έστειλ"
+      },
+      "aorist_type": "non-sigmatic",
+      "provenance": "cooljugator"
+    },
+    {
+      "lemma": "συμβαίνω",
+      "class_id": "A",
+      "stems": {
+        "imperfective": "συμβαίν"
+      },
+      "aorist_type": "non-sigmatic",
+      "provenance": "cooljugator"
     }
   ]
 }

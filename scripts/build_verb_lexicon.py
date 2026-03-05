@@ -21,6 +21,7 @@ from typing import Dict, Iterable, Optional
 DEFAULT_MORPH = "morph_extraction_matched_20250716_190035.json"
 DEFAULT_WIKT = "enwiktionary_greek_verbs.jsonl"
 DEFAULT_KAIKKI = "greek-conjugator/extracted_verbs.json"
+DEFAULT_COOLJUGATOR = "scripts/data/cooljugator_forms.jsonl"
 DEFAULT_OUT = "scripts/data/verb_lexicon.json"
 
 
@@ -123,6 +124,23 @@ def load_kaikki(path: str) -> Dict[str, dict]:
     return entries
 
 
+def load_cooljugator(path: str) -> Dict[str, dict]:
+    entries: Dict[str, dict] = {}
+    if not Path(path).exists():
+        return entries
+    with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            lemma = record.get("lemma")
+            if not lemma:
+                continue
+            entries[normalize_key(lemma)] = record
+    return entries
+
+
 def extract_from_morph(item: dict) -> dict:
     present_1sg = None
     present_2sg = None
@@ -204,10 +222,62 @@ def extract_from_kaikki(entry: dict) -> dict:
     return {"present_1sg": present_1sg, "stems": stems}
 
 
-def build_lexicon(morph_path: str, wiktextract_path: str, kaikki_path: str) -> dict:
+def extract_from_cooljugator(record: dict) -> dict:
+    present_1sg = None
+    present_2sg = None
+    aorist_active = None
+    aorist_passive = None
+
+    for form in record.get("forms", []):
+        tense = form.get("tense")
+        mood = form.get("mood")
+        voice = form.get("voice")
+        person = form.get("person")
+        number = form.get("number")
+        form_text = form.get("form")
+        if not form_text:
+            continue
+
+        if tense == "present" and mood == "indicative" and voice == "active":
+            if person == "1st" and number == "singular":
+                present_1sg = form_text
+            if person == "2nd" and number == "singular":
+                present_2sg = form_text
+        if tense == "aorist" and mood == "indicative" and voice == "active":
+            if person == "1st" and number == "singular":
+                aorist_active = form_text
+        if tense == "aorist" and mood == "indicative" and voice == "passive":
+            if person == "1st" and number == "singular":
+                aorist_passive = form_text
+
+    stems = {}
+    if present_1sg:
+        stems["imperfective"] = infer_present_stem(present_1sg)
+    if aorist_active:
+        stems["perfective_active"] = infer_aorist_active_stem(aorist_active)
+    if aorist_passive:
+        stems["perfective_passive"] = infer_aorist_passive_stem(aorist_passive)
+
+    return {
+        "present_1sg": present_1sg,
+        "present_2sg": present_2sg,
+        "aorist_active_1sg": aorist_active,
+        "aorist_passive_1sg": aorist_passive,
+        "stems": stems,
+        "aorist_type": infer_aorist_type(aorist_active) if aorist_active else None,
+    }
+
+
+def build_lexicon(
+    morph_path: str,
+    wiktextract_path: str,
+    kaikki_path: str,
+    cooljugator_path: str,
+) -> dict:
     morph = load_morph_extraction(morph_path)
     wikt = load_wiktextract(wiktextract_path)
     kaikki = load_kaikki(kaikki_path)
+    cooljugator = load_cooljugator(cooljugator_path)
 
     lexicon: Dict[str, dict] = {}
 
@@ -273,6 +343,33 @@ def build_lexicon(morph_path: str, wiktextract_path: str, kaikki_path: str) -> d
             "provenance": "kaikki",
         }
 
+    # 4) cooljugator (fill missing stems; override stubs)
+    for key, record in cooljugator.items():
+        if not is_likely_lemma(record.get("lemma") or key):
+            continue
+        extracted = extract_from_cooljugator(record)
+        stems = {k: v for k, v in extracted.get("stems", {}).items() if v}
+        if key not in lexicon:
+            class_id = infer_class_id(extracted.get("present_1sg"), extracted.get("present_2sg"))
+            lexicon[key] = {
+                "lemma": record.get("lemma") or key,
+                "class_id": class_id,
+                "stems": stems,
+                "aorist_type": extracted.get("aorist_type"),
+                "provenance": "cooljugator",
+            }
+            continue
+
+        entry = lexicon[key]
+        if stems:
+            for stem_key, value in stems.items():
+                if value and not entry["stems"].get(stem_key):
+                    entry["stems"][stem_key] = value
+            if entry.get("aorist_type") is None and extracted.get("aorist_type"):
+                entry["aorist_type"] = extracted.get("aorist_type")
+            if entry.get("provenance") == "kaikki":
+                entry["provenance"] = "cooljugator"
+
     return {"entries": list(lexicon.values())}
 
 
@@ -281,10 +378,11 @@ def main() -> None:
     parser.add_argument("--morph", default=DEFAULT_MORPH)
     parser.add_argument("--wiktextract", default=DEFAULT_WIKT)
     parser.add_argument("--kaikki", default=DEFAULT_KAIKKI)
+    parser.add_argument("--cooljugator", default=DEFAULT_COOLJUGATOR)
     parser.add_argument("--out", default=DEFAULT_OUT)
     args = parser.parse_args()
 
-    lexicon = build_lexicon(args.morph, args.wiktextract, args.kaikki)
+    lexicon = build_lexicon(args.morph, args.wiktextract, args.kaikki, args.cooljugator)
     output = {
         "schema_version": "1.0",
         "description": "Modern Greek verb lexicon (starter build).",
